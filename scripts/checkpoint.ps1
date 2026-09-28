@@ -1,32 +1,108 @@
 ﻿param(
     [string]$Message = "Automatic checkpoint",
     [switch]$Push = $true,
-    [switch]$Firmware = $false,
+    [string]$Category = "Auto", # "Auto", "Code", "Web", "Desktop", "Firmware"
+    [switch]$Firmware = $false,  # Обратная совместимость
+    [switch]$Release = $false,   # Флаг сохранения релизного билда (exe, web dist, бинарник)
     [string]$ProjectPath = (Get-Location).Path
 )
 
 $ErrorActionPreference = "Stop"
 
-$typeTitle = if ($Firmware) { "УДАЧНАЯ ПРОШИВКА (Firmware Flash - Отдельный архив)" } else { "Контрольная точка (Checkpoint)" }
-Write-Host "=== [Project Guardian] Создание резервной копии: $typeTitle ===" -ForegroundColor Cyan
-Write-Host "Проект: $ProjectPath"
-Write-Host "Сообщение: $Message"
+# 1. Определение категории проекта (Автоопределение или явное указание)
+if ($Firmware) {
+    $Category = "Firmware"
+    $Release = $true
+}
 
-# 1. Формирование уникального штампа даты и времени
+if ($Category -eq "Auto") {
+    # Поиск маркеров микроконтроллеров/прошивок
+    $isFirmwareProject = (Test-Path (Join-Path $ProjectPath "platformio.ini")) -or 
+                         (Get-ChildItem -Path $ProjectPath -Filter "*.ino" -ErrorAction SilentlyContinue) -or
+                         (Get-ChildItem -Path $ProjectPath -Filter "*.ioc" -ErrorAction SilentlyContinue)
+
+    # Поиск маркеров десктопных приложений для ПК
+    $isDesktopProject = (Get-ChildItem -Path $ProjectPath -Filter "*.spec" -ErrorAction SilentlyContinue) -or
+                        (Get-ChildItem -Path $ProjectPath -Filter "*.csproj" -ErrorAction SilentlyContinue) -or
+                        (Get-ChildItem -Path $ProjectPath -Filter "*app.py" -ErrorAction SilentlyContinue) -or
+                        (Get-ChildItem -Path $ProjectPath -Filter "*main.py" -ErrorAction SilentlyContinue)
+
+    # Поиск маркеров веб-сайтов и веб-приложений
+    $isWebProject = (Test-Path (Join-Path $ProjectPath "package.json")) -or 
+                    (Test-Path (Join-Path $ProjectPath "index.html")) -or
+                    (Test-Path (Join-Path $ProjectPath "vite.config.*")) -or
+                    (Test-Path (Join-Path $ProjectPath "next.config.*"))
+
+    if ($isFirmwareProject) {
+        $Category = "Firmware"
+    } elseif ($isWebProject) {
+        $Category = "Web"
+    } elseif ($isDesktopProject) {
+        $Category = "Desktop"
+    } else {
+        $Category = "Code"
+    }
+}
+
+# 2. Формирование меток и папок
 $now = Get-Date
 $readableDate = $now.ToString("yyyy-MM-dd HH:mm:ss")
 $timestamp = $now.ToString("yyyy-MM-dd_HH-mm-ss")
 
 $backupRoot = Join-Path $ProjectPath ".backups"
-$backupPrefix = if ($Firmware) { "firmware_success" } else { "checkpoint" }
-$currentBackupDir = Join-Path $backupRoot "${backupPrefix}_$timestamp"
 
-# Гарантия от перезаписи: если по какой-то причине папка с такой секундой существует, добавляем миллисекунды
+$backupPrefix = "checkpoint"
+$categoryEmoji = "🛡️"
+$categoryTitle = "Чекпоинт Кода"
+
+switch ($Category) {
+    "Firmware" {
+        $backupPrefix = "firmware_success"
+        $categoryEmoji = "🔥"
+        $categoryTitle = "УДАЧНАЯ ПРОШИВКА (Firmware Flash)"
+        $Release = $true
+    }
+    "Desktop" {
+        if ($Release) {
+            $backupPrefix = "desktop_release"
+            $categoryEmoji = "🖥️"
+            $categoryTitle = "РЕЛИЗ ДЕСКТОП-ПРИЛОЖЕНИЯ (ПК / Desktop Build)"
+        } else {
+            $backupPrefix = "checkpoint_desktop"
+            $categoryEmoji = "🖥️"
+            $categoryTitle = "Чекпоинт десктоп-проекта"
+        }
+    }
+    "Web" {
+        if ($Release) {
+            $backupPrefix = "web_release"
+            $categoryEmoji = "🌐"
+            $categoryTitle = "РЕЛИЗ ВЕБ-САЙТА (Web Production Build)"
+        } else {
+            $backupPrefix = "checkpoint_web"
+            $categoryEmoji = "🌐"
+            $categoryTitle = "Чекпоинт веб-проекта"
+        }
+    }
+    default {
+        $backupPrefix = "checkpoint"
+        $categoryEmoji = "🛡️"
+        $categoryTitle = "Универсальный чекпоинт кода"
+    }
+}
+
+$currentBackupDir = Join-Path $backupRoot "${backupPrefix}_$timestamp"
 if (Test-Path $currentBackupDir) {
     $timestamp = $now.ToString("yyyy-MM-dd_HH-mm-ss_fff")
     $currentBackupDir = Join-Path $backupRoot "${backupPrefix}_$timestamp"
 }
 
+Write-Host "=== [Project Guardian] Резервная копия: $categoryEmoji $categoryTitle ===" -ForegroundColor Cyan
+Write-Host "Проект: $ProjectPath"
+Write-Host "Категория: $Category (Релизный архив: $Release)"
+Write-Host "Сообщение: $Message"
+
+# 3. Создание бэкапа
 try {
     if (-not (Test-Path $backupRoot)) {
         New-Item -ItemType Directory -Path $backupRoot -Force | Out-Null
@@ -46,72 +122,93 @@ try {
         Write-Host "Добавлена запись .backups/ в .gitignore" -ForegroundColor Green
     }
 
-    # Создаем новую уникальную папку бэкапа (никогда не перезаписывает старые)
+    # Создаем изолированную директорию (никогда не перезаписывает старые)
     New-Item -ItemType Directory -Path $currentBackupDir -Force | Out-Null
 
-    # Список исключений для базового копирования
-    $excludeDirs = @(".git", ".backups", "node_modules", ".venv", "venv", "__pycache__", "dist", "build", ".next", ".turbo")
+    # Исключения зависимостей и временных файлов
+    $excludeDirs = @(".git", ".backups", "node_modules", ".venv", "venv", "__pycache__", "dist", "build", ".next", ".nuxt", ".turbo", "bin", "obj")
 
-    # Копируем исходный код проекта в архив
+    # Копирование исходников
     $items = Get-ChildItem -Path $ProjectPath -Force | Where-Object { $excludeDirs -notcontains $_.Name }
     foreach ($item in $items) {
         Copy-Item -Path $item.FullName -Destination $currentBackupDir -Recurse -Force
     }
 
-    # Если это отдельный бэкап прошивки — сохраняем бинарники и создаем паспорт прошивки
-    if ($Firmware) {
+    # 4. Сохранение релизных артефактов в зависимости от категории
+    $savedArtifacts = @()
+
+    if ($Category -eq "Firmware") {
         $firmwareBinDir = Join-Path $currentBackupDir "firmware_binaries"
         New-Item -ItemType Directory -Path $firmwareBinDir -Force | Out-Null
-
         $binExtensions = @("*.bin", "*.hex", "*.elf", "*.uf2", "*.dfu", "*.img", "*.ota")
         $foundBinaries = Get-ChildItem -Path $ProjectPath -Recurse -Include $binExtensions -File -ErrorAction SilentlyContinue | Where-Object { $_.FullName -notlike "*\.backups\*" }
 
-        $savedBinInfo = @()
-        if ($foundBinaries) {
-            foreach ($bin in $foundBinaries) {
-                $targetFile = Join-Path $firmwareBinDir $bin.Name
-                Copy-Item -Path $bin.FullName -Destination $targetFile -Force
-                $hash = (Get-FileHash -Path $bin.FullName -Algorithm SHA256).Hash
-                $savedBinInfo += [PSCustomObject]@{
-                    Name = $bin.Name
-                    SizeKB = [math]::Round($bin.Length / 1KB, 2)
-                    SHA256 = $hash
-                }
-                Write-Host "  [Бинарник сохранен]: $($bin.Name) ($([math]::Round($bin.Length / 1KB, 2)) KB)" -ForegroundColor Magenta
+        foreach ($bin in $foundBinaries) {
+            Copy-Item -Path $bin.FullName -Destination (Join-Path $firmwareBinDir $bin.Name) -Force
+            $hash = (Get-FileHash -Path $bin.FullName -Algorithm SHA256).Hash
+            $savedArtifacts += [PSCustomObject]@{ Name = $bin.Name; SizeKB = [math]::Round($bin.Length / 1KB, 2); SHA256 = $hash }
+            Write-Host "  [Бинарник сохранен]: $($bin.Name) ($([math]::Round($bin.Length / 1KB, 2)) KB)" -ForegroundColor Magenta
+        }
+    }
+    elseif ($Category -eq "Desktop" -and $Release) {
+        $desktopBinDir = Join-Path $currentBackupDir "desktop_binaries"
+        New-Item -ItemType Directory -Path $desktopBinDir -Force | Out-Null
+        $exeExtensions = @("*.exe", "*.msi", "*.dll", "*.zip")
+        # Ищем в dist/ и корне
+        $foundExes = Get-ChildItem -Path $ProjectPath -Recurse -Include $exeExtensions -File -ErrorAction SilentlyContinue | Where-Object { $_.FullName -notlike "*\.backups\*" -and $_.FullName -notlike "*\node_modules\*" -and $_.FullName -notlike "*\.venv\*" }
+
+        foreach ($f in $foundExes) {
+            Copy-Item -Path $f.FullName -Destination (Join-Path $desktopBinDir $f.Name) -Force
+            $hash = (Get-FileHash -Path $f.FullName -Algorithm SHA256).Hash
+            $savedArtifacts += [PSCustomObject]@{ Name = $f.Name; SizeKB = [math]::Round($f.Length / 1KB, 2); SHA256 = $hash }
+            Write-Host "  [Десктоп бинарник/EXE сохранен]: $($f.Name) ($([math]::Round($f.Length / 1KB, 2)) KB)" -ForegroundColor Magenta
+        }
+    }
+    elseif ($Category -eq "Web" -and $Release) {
+        $webDistDir = Join-Path $currentBackupDir "web_artifacts"
+        New-Item -ItemType Directory -Path $webDistDir -Force | Out-Null
+        $distFolders = @("dist", "build", "out")
+        foreach ($df in $distFolders) {
+            $srcDist = Join-Path $ProjectPath $df
+            if (Test-Path $srcDist) {
+                Copy-Item -Path $srcDist -Destination (Join-Path $webDistDir $df) -Recurse -Force
+                Write-Host "  [Веб-сборка сохранена]: $df" -ForegroundColor Magenta
             }
         }
+    }
 
-        # Создаем паспорт прошивки FIRMWARE_INFO.md внутри отдельного архива
-        $firmwareInfoContent = @"
-# Паспорт удачной прошивки: $timestamp
+    # Генерация паспорта релиза
+    if ($Release -or $Category -eq "Firmware") {
+        $passportContent = @"
+# Паспорт релиза: $backupPrefix [$timestamp]
 
-- **Дата и время прошивки**: $readableDate
-- **Описание / Версия**: $Message
-- **Директория архива**: $currentBackupDir
+- **Категория**: $Category
+- **Дата и время**: $readableDate
+- **Описание**: $Message
+- **Папка архива**: $currentBackupDir
 
-## Сохраненные бинарники:
+## Сохраненные артефакты:
 "@
-        if ($savedBinInfo.Count -gt 0) {
-            foreach ($b in $savedBinInfo) {
-                $firmwareInfoContent += "`n- **$($b.Name)** ($($b.SizeKB) KB) | SHA256: ``$($b.SHA256)``"
+        if ($savedArtifacts.Count -gt 0) {
+            foreach ($a in $savedArtifacts) {
+                $passportContent += "`n- **$($a.Name)** ($($a.SizeKB) KB) | SHA256: ``$($a.SHA256)``"
             }
         } else {
-            $firmwareInfoContent += "`n*(Бинарные файлы в проекте не обнаружены, сохранен полный слепок исходного кода на момент прошивки)*"
+            $passportContent += "`n*(Полный снимок рабочего исходного кода сохранен без перезаписи)*"
         }
 
-        $firmwareInfoFile = Join-Path $currentBackupDir "FIRMWARE_INFO.md"
-        [System.IO.File]::WriteAllText($firmwareInfoFile, $firmwareInfoContent, [System.Text.Encoding]::UTF8)
-
-        Write-Host "[OK] Создан отдельный несгораемый архив прошивки: $currentBackupDir" -ForegroundColor Green
-    } else {
-        Write-Host "[OK] Резервная копия сохранена в: $currentBackupDir" -ForegroundColor Green
+        $passportFile = Join-Path $currentBackupDir "RELEASE_INFO.md"
+        [System.IO.File]::WriteAllText($passportFile, $passportContent, [System.Text.Encoding]::UTF8)
+        Write-Host "[OK] Паспорт релиза создан: RELEASE_INFO.md" -ForegroundColor Green
     }
+
+    Write-Host "[OK] Резервная копия сохранена в: $currentBackupDir" -ForegroundColor Green
 }
 catch {
     Write-Warning "Не удалось создать файловый бэкап в .backups: $_"
 }
 
-# 2. Обработка Git
+# 5. Обработка Git
 $isGit = $false
 try {
     $gitCheck = & git -C $ProjectPath rev-parse --is-inside-work-tree 2>$null
@@ -127,7 +224,14 @@ if ($isGit) {
     try {
         & git -C $ProjectPath add -A
         $status = & git -C $ProjectPath status --porcelain
-        $commitPrefix = if ($Firmware) { "firmware: [SUCCESS FLASH]" } else { "checkpoint:" }
+        $tagPrefix = $Category.ToLower()
+
+        $commitPrefix = switch ($Category) {
+            "Firmware" { "firmware: [SUCCESS FLASH]" }
+            "Desktop"  { if ($Release) { "desktop: [RELEASE BUILD]" } else { "desktop: [checkpoint]" } }
+            "Web"      { if ($Release) { "web: [PRODUCTION BUILD]" } else { "web: [checkpoint]" } }
+            default    { "checkpoint:" }
+        }
         $fullCommitMsg = "$commitPrefix $Message [$timestamp]"
 
         if ($status) {
@@ -137,10 +241,10 @@ if ($isGit) {
             Write-Host "В Git нет незафиксированных изменений рабочего дерева." -ForegroundColor Yellow
         }
 
-        # Если это прошивка, создаем уникальный тег с датой и временем
-        if ($Firmware) {
-            $tagName = "firmware-flash-$timestamp"
-            & git -C $ProjectPath tag -a $tagName -m "Удачная прошивка: $Message ($readableDate)"
+        # Если это релиз или прошивка — создаем уникальный Git-тег с датой и временем
+        if ($Release -or $Category -eq "Firmware") {
+            $tagName = "$tagPrefix-v$timestamp"
+            & git -C $ProjectPath tag -a $tagName -m "Релиз ($Category): $Message ($readableDate)"
             Write-Host "[OK] Создан уникальный Git-тег: $tagName" -ForegroundColor Magenta
         }
 
@@ -151,7 +255,7 @@ if ($isGit) {
             if ($currentBranch -and $currentBranch -ne "HEAD") {
                 Write-Host "Отправка изменений в origin/$currentBranch..." -ForegroundColor Cyan
                 & git -C $ProjectPath push origin $currentBranch
-                if ($Firmware) {
+                if ($Release -or $Category -eq "Firmware") {
                     & git -C $ProjectPath push origin --tags
                 }
                 if ($LASTEXITCODE -eq 0) {
@@ -171,12 +275,17 @@ if ($isGit) {
     Write-Host "Папка не является Git-репозиторием. Локальный бэкап успешно создан." -ForegroundColor Gray
 }
 
-# 3. Обновление даты в PROJECT_STATE.md
+# 6. Обновление даты в PROJECT_STATE.md
 $stateFile = Join-Path $ProjectPath "PROJECT_STATE.md"
 if (Test-Path $stateFile) {
     try {
         $stateContent = Get-Content $stateFile -Raw -Encoding UTF8
-        $entryPrefix = if ($Firmware) { "🔥 **УДАЧНАЯ ПРОШИВКА**" } else { "**Чекпоинт**" }
+        $entryPrefix = switch ($Category) {
+            "Firmware" { "🔥 **УДАЧНАЯ ПРОШИВКА**" }
+            "Desktop"  { if ($Release) { "🖥️ **РЕЛИЗ ДЕСКТОП-ПРИЛОЖЕНИЯ**" } else { "🖥️ **Чекпоинт (ПК)**" } }
+            "Web"      { if ($Release) { "🌐 **РЕЛИЗ ВЕБ-САЙТА**" } else { "🌐 **Чекпоинт (Web)**" } }
+            default    { "🛡️ **Чекпоинт**" }
+        }
         $logEntry = "`n- $entryPrefix [$readableDate] (метка: $timestamp): $Message"
         if ($stateContent -match "(## 5\. История Изменений[^\r\n]*)") {
             $stateContent = $stateContent -replace "(## 5\. История Изменений[^\r\n]*)", "`$1`n$logEntry"
@@ -188,4 +297,4 @@ if (Test-Path $stateFile) {
     }
 }
 
-Write-Host "`nРезервное копирование завершено успешно! Архив сохранен навсегда." -ForegroundColor Green
+Write-Host "`nРезервное копирование завершено успешно! Архив сохранен без перезаписи." -ForegroundColor Green

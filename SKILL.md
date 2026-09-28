@@ -1,90 +1,88 @@
 ---
 name: project-guardian
 description: >-
-  Автоматический хранитель проекта: сохранение контекста и памяти проекта (PROJECT_STATE.md),
-  создание контрольных точек и резервных копий кода перед изменениями, создание отдельного
-  бэкапа при каждой удачной прошивке (Firmware Flash), безопасный откат (rollback),
-  коммит и пуш в Git при наличии remote, а также автономная загрузка недостающих скиллов из
-  каталога sickn33/agentic-awesome-skills.
+  Универсальный хранитель проекта для любых сфер разработки: Веб-сайты (Web), Программы для ПК (Desktop),
+  Прошивки микроконтроллеров (Firmware) и Backend. Автоматическое сохранение памяти проекта (PROJECT_STATE.md),
+  создание контрольных точек и несгораемых релизных бэкапов без перезаписи, безопасный откат (rollback),
+  коммит и пуш в Git при наличии remote, а также автономный подбор скиллов из каталога sickn33/agentic-awesome-skills.
 ---
 
-# Project Guardian (Хранитель Проекта и Безопасной Разработки)
+# Project Guardian (Универсальный Хранитель Проекта)
 
-Скилл обеспечивает непрерывность контекста между диалогами, сохранность кодовой базы, безопасный откат при ошибках, автоматическую синхронизацию с Git и обязательное резервное копирование при прошивке устройств.
-
----
-
-## 1. Сохранение памяти проекта (`PROJECT_STATE.md`)
-
-В корне каждого проекта ведется файл `PROJECT_STATE.md`.
-- **В начале диалога**: если файл существует, агент обязан первым делом прочитать его, чтобы мгновенно восстановить контекст (цель, стек, архитектуру, выполненные шаги, текущий статус).
-- **В конце диалога или после завершения задачи**: агент обязан обновить `PROJECT_STATE.md`, зафиксировав:
-  - Что было сделано в этой сессии.
-  - Текущее рабочее состояние.
-  - Следующие планируемые шаги.
-
-Эталонный шаблон структуры находится в [`./references/PROJECT_STATE_TEMPLATE.md`](./references/PROJECT_STATE_TEMPLATE.md).
+Скилл полностью адаптирован под три ключевых направления:
+1. 🌐 **Веб-сайты и веб-приложения** (React, Vue, Next.js, HTML/CSS/JS, FastAPI, Flask, Django).
+2. 🖥️ **Программы для ПК** (PyQt6/PySide, C# .NET, Electron, Tauri, PyInstaller `.exe`).
+3. 🔥 **Прошивки микроконтроллеров** (ARM Cortex, STM32, Teensy, ESP32, Arduino, PlatformIO).
 
 ---
 
-## 2. Контрольные точки (Checkpoints) и Бэкапы перед правками
+## 1. Долговременная память проекта (`PROJECT_STATE.md`)
 
-Перед внесением значительных изменений в существующий рабочий код необходимо создать точку восстановления:
-- Запустить PowerShell-скрипт:
+В корне любого проекта (веб, десктоп или прошивка) ведется файл `PROJECT_STATE.md`:
+- **При старте диалога**: агент считывает его и моментально подхватывает контекст (цель, стек, текущее состояние, команды запуска/сборки, открытые задачи).
+- **По завершении этапа**: агент актуализирует статус и фиксирует журнал изменений.
+- Эталонная структура: [`./references/PROJECT_STATE_TEMPLATE.md`](./references/PROJECT_STATE_TEMPLATE.md).
+
+---
+
+## 2. Контрольные точки и бэкапы (`checkpoint.ps1`)
+
+Скрипт автоматически распознает тип проекта или принимает категорию явно:
+```powershell
+# Автоматический чекпоинт кода (перед правками):
+& "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\checkpoint.ps1" -Message "Рефакторинг логики"
+
+# Релиз веб-сайта (сохраняет продакшн сборку из dist/build):
+& "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\checkpoint.ps1" -Message "Релиз сайта v1.0" -Category "Web" -Release
+
+# Релиз программы для ПК (сохраняет .exe, .msi, библиотеки с SHA256):
+& "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\checkpoint.ps1" -Message "Сборка ПК утилиты v1.0" -Category "Desktop" -Release
+
+# Удачная прошивка микроконтроллера (сохраняет .bin, .hex, .elf с SHA256):
+& "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\checkpoint.ps1" -Message "Успешный flash v1.2" -Firmware
+```
+
+### Принцип «Несгораемых архивов»:
+- Каждая сборка/прошивка/релиз сохраняется в **отдельную папку с уникальной датой и временем**:
+  - `.backups/firmware_success_YYYY-MM-dd_HH-mm-ss/`
+  - `.backups/desktop_release_YYYY-MM-dd_HH-mm-ss/`
+  - `.backups/web_release_YYYY-MM-dd_HH-mm-ss/`
+- Старые релизы **НИКОГДА не перезаписываются**.
+- Создаются паспорта сборки `RELEASE_INFO.md` / `FIRMWARE_INFO.md` с контрольными суммами SHA256 и Git-теги.
+
+---
+
+## 3. Откат и просмотр истории (`rollback.ps1`)
+
+- **Просмотреть все сохраненные точки**:
   ```powershell
-  & "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\checkpoint.ps1" -Message "Описание этапа" [-Push]
+  & "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\rollback.ps1" -List
   ```
-- **Что делает скрипт**:
-  1. Создает локальный снимок файлов в папку `.backups/checkpoint_<timestamp>/` (и добавляет `.backups/` в `.gitignore`).
-  2. Если инициализирован Git (`git rev-parse --is-inside-work-tree`), индексирует изменения (`git add -A`) и создает коммит с переданным описанием.
-  3. Если передан флаг `-Push` (или настроен авто-пуш) и у репозитория есть `git remote`, отправляет изменения в текущую ветку (`git push origin <branch>`).
-  4. Обновляет дату последней активности в `PROJECT_STATE.md`.
-
----
-
-## 3. Отдельный бэкап при каждой удачной прошивке (Firmware Flash Backup)
-
-**КРИТИЧЕСКИ ВАЖНО:** При каждой успешной компиляции и прошивке микроконтроллера/устройства (ARM Cortex, STM32, Teensy, ESP32, nRF и др.) **ОБЯЗАТЕЛЬНО** создается отдельный изолированный бэкап:
-- Запустить скрипт с флагом `-Firmware`:
-  ```powershell
-  & "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\checkpoint.ps1" -Message "Версия прошивки / фича" -Firmware
-  ```
-- **Что делает этот режим**:
-  1. Создает отдельную папку `.backups/firmware_success_<timestamp>/`.
-  2. Сохраняет полный снимок исходного кода проекта на момент успешной прошивки.
-  3. Автоматически находит и сохраняет бинарные артефакты (`.bin`, `.hex`, `.elf`, `.uf2`, `.dfu`, `.img`) в папку `firmware_binaries/`.
-  4. В Git создает аннотированный тег `firmware-flash-<timestamp>` и отправляет теги в remote (`git push origin --tags`).
-  5. Вносит в `PROJECT_STATE.md` отметку `🔥 УДАЧНАЯ ПРОШИВКА`.
-
----
-
-## 4. Безопасный откат (Rollback)
-
-Если в процессе работы что-то пошло не так, возникли регрессии или пользователь просит вернуться к предыдущему состоянию:
-- Запустить скрипт отката:
+- **Откатиться к последнему рабочему состоянию**:
   ```powershell
   & "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\rollback.ps1"
   ```
-- Можно указать конкретный чекпоинт или бэкап прошивки:
+- **Откатиться к конкретному релизу или прошивке**:
   ```powershell
-  & "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\rollback.ps1" -TargetCheckpoint "firmware_success_20260923_104500"
+  & "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\rollback.ps1" -TargetCheckpoint "desktop_release_2026-09-28_15-00-00"
   ```
 
 ---
 
-## 5. Автономная установка недостающих скиллов
+## 4. Автономный подбор специализированных скиллов
 
-Если в процессе работы требуется библиотека, фреймворк или инструмент, для которого нет локального скилла, агент автономно и без лишних напоминаний скачивает его из каталога [sickn33/agentic-awesome-skills](https://github.com/sickn33/agentic-awesome-skills):
-- Запустить команду установки:
-  ```powershell
-  & "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\install-skill.ps1" -SkillName "<имя-скилла>"
-  ```
-- Скилл сразу становится доступен в `C:\Users\Salomanov\.gemini\config\skills\<имя-скилла>\SKILL.md`.
+В зависимости от того, что мы разрабатываем, агент сам подтягивает специализированные навыки из каталога [sickn33/agentic-awesome-skills](https://github.com/sickn33/agentic-awesome-skills):
+- **Для сайтов**: `react-ui-patterns`, `tailwind-patterns`, `fastapi-expert`, `seo-optimization`, `web-performance`.
+- **Для ПК программ**: `pyqt6-desktop-dev`, `pyinstaller-windows-packager`, `csharp-dotnet`.
+- **Для прошивок**: `arm-cortex-expert`, `firmware-analyst`, `hardware-security`.
+
+Команда установки:
+```powershell
+& "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\install-skill.ps1" -SkillName "<имя-скилла>"
+```
 
 ---
 
-## 6. Обязательный анализ архитектуры через `graphify`
+## 5. Архитектурный анализ через `graphify`
 
-Для любого проекта с существующим кодом:
-- Проверять наличие папки `graphify-out/`.
-- Если графа еще нет или код существенно изменился — генерировать/обновлять граф знаний командой `/graphify` или через скрипты скилла `graphify`, чтобы иметь полное понимание зависимостей и архитектуры перед внесением изменений.
+Для любого проекта (веб-приложение, исходники десктопной программы на Python/C#, репозиторий прошивки на C/C++) агент использует `graphify` для построения графа зависимостей и взаимосвязей файлов в папке `graphify-out/`.
