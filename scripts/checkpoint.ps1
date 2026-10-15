@@ -1,9 +1,10 @@
-﻿param(
+param(
     [string]$Message = "Automatic checkpoint",
     [switch]$Push = $true,
     [string]$Category = "Auto", # "Auto", "Code", "Web", "Desktop", "Firmware"
     [switch]$Firmware = $false,  # Обратная совместимость
     [switch]$Release = $false,   # Флаг сохранения релизного билда (exe, web dist, бинарник)
+    [switch]$NoGraphify = $false,# Пропустить автоматическое обновление графа graphify
     [string]$ProjectPath = (Get-Location).Path
 )
 
@@ -206,6 +207,27 @@ try {
 }
 catch {
     Write-Warning "Не удалось создать файловый бэкап в .backups: $_"
+}
+
+# 4.1. Автоматическое обновление графа знаний (graphify)
+$graphifyDir = Join-Path $ProjectPath "graphify-out"
+if ((Test-Path $graphifyDir) -and (-not $NoGraphify)) {
+    Write-Host "`n=== Обновление Графа Знаний (Graphify) ===" -ForegroundColor Cyan
+    try {
+        $pyCmd = Get-Command python -ErrorAction SilentlyContinue
+        if ($pyCmd) {
+            Write-Host "Инкрементальный анализ кодовой базы через graphify..." -ForegroundColor Gray
+            & $pyCmd.Source -m graphify extract $ProjectPath --code-only 2>$null
+            & $pyCmd.Source -m graphify cluster-only $ProjectPath 2>$null
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "[OK] Граф знаний graphify успешно актуализирован!" -ForegroundColor Green
+            } else {
+                Write-Host "[!] Завершено с кодом $LASTEXITCODE" -ForegroundColor Yellow
+            }
+        }
+    } catch {
+        Write-Warning "Не удалось обновить graphify: $_"
+    }
 }
 
 # 5. Обработка Git
