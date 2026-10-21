@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$Message = "Automatic checkpoint",
     [switch]$Push = $true,
     [string]$Category = "Auto", # "Auto", "Code", "Web", "Desktop", "Firmware"
