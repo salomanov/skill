@@ -1,4 +1,4 @@
-﻿# Состояние Проекта: Project Guardian (Universal Skill)
+# Состояние Проекта: Project Guardian (Universal Skill)
 
 > Данный файл автоматически ведется агентом и служит долговременной памятью проекта.
 > При начале новой сессии агент считывает этот файл в первую очередь.
@@ -42,11 +42,14 @@
 - [x] Паспорта сборки `RELEASE_INFO.md` / `FIRMWARE_INFO.md` с хэшами SHA256
 - [x] Режим просмотра списка точек восстановления `rollback.ps1 -List`
 - [x] Интеграция Ponytail (режим «ленивого сеньора», экономия токенов и кода на 50%+)
-- [x] Обновлены глобальные правила в `~/.gemini/config/AGENTS.md` (Правило #7: Ponytail)
+- [x] Обновлены глобальные правила в `~/.gemini/config/AGENTS.md` (Правило #7: Ponytail, Правило #8: Immediate Failure & Graphify Logging)
+- [x] Создан скрипт `record-failure.ps1` для моментального логирования инцидентов, запуска graphify и Git авто-коммита
 - [x] Подключен удаленный репозиторий `https://github.com/salomanov/skill.git`
 - [x] Проект перенесен в `E:\Projects\Skill`
 
 ## 5. История Изменений (Журнал сессий)
+
+- 🛡️ **Чекпоинт** [2026-10-21 15:19:00] (метка: 2026-10-21_15-19-00): feat: add record-failure.ps1 for immediate failure and graphify logging
 
 - 🛡️ **Чекпоинт** [2026-10-21 13:24:42] (метка: 2026-10-21_13-24-42): chore: update project path to E:\Projects\Skill
 ### [2026-10-21 13:25]
