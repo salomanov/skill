@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Автоматическая немедленная фиксация сбоев, аппаратных граблей и инцидентов.
 .DESCRIPTION
@@ -57,14 +57,7 @@ if (-not (Test-Path $errorFile)) {
         if (-not (Test-Path $docsDir)) {
             New-Item -ItemType Directory -Path $docsDir -Force | Out-Null
         }
-        $header = @"
-# База знаний ошибок, граблей и неудачных экспериментов (FAILURE LOG)
-> **Назначение файла**: Полный реестр всех ошибочных решений, тупиковых гипотез и проверенных антипаттернов.
-> **Правило разработчика**: ПЕРЕД любым изменением пинов, регистров или архитектуры ОБЯЗАТЕЛЬНО свериться с этим файлом!
-
----
-
-"@
+        $header = "# База знаний ошибок, граблей и неудачных экспериментов (FAILURE LOG)`n> **Назначение файла**: Полный реестр всех ошибочных решений, тупиковых гипотез и проверенных антипаттернов.`n> **Правило разработчика**: ПЕРЕД любым изменением пинов, регистров или архитектуры ОБЯЗАТЕЛЬНО свериться с этим файлом!`n`n---`n`n"
         [System.IO.File]::WriteAllText($errorFile, $header, [System.Text.Encoding]::UTF8)
         Write-Host "[OK] Создан новый файл базы ошибок: $errorFile" -ForegroundColor Green
     }
@@ -72,16 +65,7 @@ if (-not (Test-Path $errorFile)) {
 
 # 2. Формирование записи ошибки
 $timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
-$entry = @"
-
----
-
-### [Инцидент $timestamp] $Title
-- **Симптом и ущерб**: $Symptom
-- **Причина (Root Cause)**: $RootCause
-- **Решение и правило**: $Solution
-
-"@
+$entry = "`n---`n`n### [Инцидент $timestamp] $Title`n- **Симптом и ущерб**: $Symptom`n- **Причина (Root Cause)**: $RootCause`n- **Решение и правило**: $Solution`n"
 
 [System.IO.File]::AppendAllText($errorFile, $entry, [System.Text.Encoding]::UTF8)
 Write-Host "[OK] Инцидент зафиксирован в $errorFile" -ForegroundColor Green

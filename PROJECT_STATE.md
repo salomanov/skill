@@ -1,4 +1,4 @@
-# Состояние Проекта: Project Guardian (Universal Skill)
+﻿# Состояние Проекта: Project Guardian (Universal Skill)
 
 > Данный файл автоматически ведется агентом и служит долговременной памятью проекта.
 > При начале новой сессии агент считывает этот файл в первую очередь.
@@ -48,6 +48,8 @@
 - [x] Проект перенесен в `E:\Projects\Skill`
 
 ## 5. История Изменений (Журнал сессий)
+
+- 🛡️ **Чекпоинт** [2026-10-21 15:21:04] (метка: 2026-10-21_15-21-04): docs: update PROJECT_STATE with Rule 8 and record-failure
 
 - 🛡️ **Чекпоинт** [2026-10-21 15:19:00] (метка: 2026-10-21_15-19-00): feat: add record-failure.ps1 for immediate failure and graphify logging
 
