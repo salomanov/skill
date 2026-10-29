@@ -49,6 +49,11 @@
 
 ## 5. История Изменений (Журнал сессий)
 
+### [2026-10-29 10:40]
+- **Что сделано**: Внедрен Раздел 9 «Zero Exit Code 1 Discipline» с явной поддержкой нативного Git Bash (`C:\Program Files\Git\bin\bash.exe`) и Python UTF-8. Закреплен обязательный файловый запуск любых команд через `scratch/<task>.py` / `.sh`. Правило перенесено в глобальный `~/.gemini/config/AGENTS.md` для действия во всех сессиях.
+- **Чекпоинт**: Релиз v1.4.0 (Zero Exit Code 1 Discipline & Git Bash Integration).
+
+
 - 🛡️ **Чекпоинт** [2026-10-21 15:21:04] (метка: 2026-10-21_15-21-04): docs: update PROJECT_STATE with Rule 8 and record-failure
 
 - 🛡️ **Чекпоинт** [2026-10-21 15:19:00] (метка: 2026-10-21_15-19-00): feat: add record-failure.ps1 for immediate failure and graphify logging
