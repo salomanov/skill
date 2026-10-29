@@ -1,6 +1,7 @@
 ﻿param(
     [string]$Message = "Automatic checkpoint",
-    [switch]$Push = $true,
+    [switch]$Push = $false,   # Пуш в remote — только по явному -Push
+    [switch]$NoPush = $false, # Совместимость со старыми вызовами
     [string]$Category = "Auto", # "Auto", "Code", "Web", "Desktop", "Firmware"
     [switch]$Firmware = $false,  # Обратная совместимость
     [switch]$Release = $false,   # Флаг сохранения релизного билда (exe, web dist, бинарник)
@@ -270,9 +271,9 @@ if ($isGit) {
             Write-Host "[OK] Создан уникальный Git-тег: $tagName" -ForegroundColor Magenta
         }
 
-        # Проверка remote для push
+        # Проверка remote для push (только по явному -Push)
         $remotes = & git -C $ProjectPath remote
-        if ($remotes -and $Push) {
+        if ($remotes -and $Push -and -not $NoPush) {
             $currentBranch = (& git -C $ProjectPath rev-parse --abbrev-ref HEAD).Trim()
             if ($currentBranch -and $currentBranch -ne "HEAD") {
                 Write-Host "Отправка изменений в origin/$currentBranch..." -ForegroundColor Cyan
@@ -288,6 +289,8 @@ if ($isGit) {
             }
         } elseif (-not $remotes) {
             Write-Host "Git remote не настроен. Коммит сохранен локально." -ForegroundColor Gray
+        } else {
+            Write-Host "Коммит сохранён локально. Пуш не выполнялся (нужен явный -Push)." -ForegroundColor Gray
         }
     }
     catch {
