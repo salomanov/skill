@@ -1,4 +1,4 @@
-﻿param(
+﻿﻿param(
     [Parameter(Mandatory=$true)]
     [string]$SkillName,
     [string]$DestDir = "C:\Users\Salomanov\.gemini\config\skills"

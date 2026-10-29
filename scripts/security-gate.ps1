@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Executable security & reliability gate for any project.
 .DESCRIPTION

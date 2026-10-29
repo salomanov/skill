@@ -1,4 +1,4 @@
----
+﻿---
 name: project-guardian
 description: >-
   Универсальный хранитель проекта для любых сфер разработки: Веб-сайты (Web), Программы для ПК (Desktop),
@@ -89,7 +89,47 @@ description: >-
 
 ---
 
-## 5. Автономный подбор специализированных скиллов
+## 5. Утилиты продуктивности и контроля (Productivity Suite)
+
+В состав скилла входят практичные скрипты для автоматизации рутины:
+
+### 5.1 🩺 Экспресс-диагностика окружения и проекта (`doctor.ps1`)
+Быстрый светофор готовности проекта (рантаймы, статус Git, синхронизация с remote, проверки безопасности, актуальность `PROJECT_STATE.md`):
+```powershell
+& "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\doctor.ps1"
+```
+
+### 5.2 🤝 Бесшовный перенос контекста в новый диалог (`prepare-handoff.ps1`)
+Готовит ультракомпактный слепок проекта в `.agents/HANDOFF.md` и генерирует готовый 4-строчный промпт для вставки в новый чат (нулевой перерасход токенов):
+```powershell
+& "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\prepare-handoff.ps1" -NextGoal "Собрать релиз и протестировать"
+```
+
+### 5.3 🧹 Ротация и очистка бэкапов (`clean-backups.ps1`)
+Очищает старые промежуточные чекпоинты (старше N дней / сверх лимита), **ни при каких условиях не удаляя несгораемые релизы и прошивки** (`firmware_success_*`, `desktop_release_*`, `web_release_*`):
+```powershell
+# Просмотр без удаления (DryRun):
+& "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\clean-backups.ps1" -DryRun
+
+# Реальная очистка (хранить последние 10):
+& "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\clean-backups.ps1" -KeepCount 10
+```
+
+### 5.4 🔑 Генерация безопасного шаблона `.env.example` (`gen-env.ps1`)
+Сканирует исходный код на обращения к `process.env`, `os.getenv`, `os.environ` и генерирует чистый шаблон переменных окружения без утечки секретов:
+```powershell
+& "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\gen-env.ps1"
+```
+
+### 5.5 🧪 Предварительный запуск тестов перед чекпоинтом (`-Verify`)
+При передаче флага `-Verify` скрипт `checkpoint.ps1` сначала запускает существующие автотесты (`pytest`, `npm test`). Если тесты провалены — чекпоинт блокируется:
+```powershell
+& "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\checkpoint.ps1" -Message "Новый функционал" -Verify
+```
+
+---
+
+## 6. Автономный подбор специализированных скиллов
 
 В зависимости от того, что мы разрабатываем, агент сам подтягивает специализированные навыки из каталога [sickn33/agentic-awesome-skills](https://github.com/sickn33/agentic-awesome-skills):
 - **Для сайтов**: `react-ui-patterns`, `tailwind-patterns`, `fastapi-expert`, `seo-optimization`, `web-performance`.
@@ -103,14 +143,14 @@ description: >-
 
 ---
 
-## 6. Архитектурный анализ через `graphify`
+## 7. Архитектурный анализ через `graphify`
 
 Для любого проекта (веб-приложение, исходники десктопной программы на Python/C#, репозиторий прошивки на C/C++) агент использует `graphify` для построения графа зависимостей и взаимосвязей файлов в папке `graphify-out/`.
 - **Автоматическая актуализация**: скрипт `checkpoint.ps1` при наличии папки `graphify-out/` автоматически запускает инкрементальное обновление графа перед коммитом (`graphify extract --code-only` и `graphify cluster-only`). Для пропуска можно передать флаг `-NoGraphify`.
 
 ---
 
-## 7. Прагматичный режим Ponytail (Чистый код и экономия токенов)
+## 8. Прагматичный режим Ponytail (Чистый код и экономия токенов)
 
 Агент во всех задачах руководствуется принципом **«ленивого сеньора» (Ponytail)**:
 - **Наименьшее полное изменение побеждает**: лучший код — тот, который не пришлось писать. Решать задачу минимальным объемом нового кода.
@@ -124,7 +164,7 @@ description: >-
 
 ---
 
-## 8. Исполняемый Security & Reliability Gate
+## 9. Исполняемый Security & Reliability Gate
 
 Правила ниже — не декларация. Их проверяет скрипт, и **задача не считается закрытой, пока он не вернул 0**:
 
@@ -203,7 +243,7 @@ description: >-
 
 ---
 
-## 9. Предотвращение частых сбоев команд (Zero Exit Code 1 Discipline)
+## 10. Предотвращение частых сбоев команд (Zero Exit Code 1 Discipline)
 
 Анализ 140+ ошибок `exited with code 1` в сессиях выявил 5 главных системных причин, которые агент ОБЯЗАН исключить:
 
@@ -288,7 +328,7 @@ description: >-
 
 ---
 
-## 12. Definition of Done
+## 13. Definition of Done
 
 Задача закрыта, только если в финальном отчёте есть:
 

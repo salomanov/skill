@@ -1,4 +1,4 @@
-﻿param(
+﻿﻿param(
     [string]$Message = "Automatic checkpoint",
     [switch]$Push = $false,   # Пуш в remote — только по явному -Push
     [switch]$NoPush = $false, # Совместимость со старыми вызовами
@@ -6,6 +6,7 @@
     [switch]$Firmware = $false,  # Обратная совместимость
     [switch]$Release = $false,   # Флаг сохранения релизного билда (exe, web dist, бинарник)
     [switch]$NoGraphify = $false,# Пропустить автоматическое обновление графа graphify
+    [switch]$Verify = $false,    # Запустить авто-тесты перед чекпоинтом
     [string]$ProjectPath = (Get-Location).Path
 )
 
@@ -228,6 +229,46 @@ if ((Test-Path $graphifyDir) -and (-not $NoGraphify)) {
         }
     } catch {
         Write-Warning "Не удалось обновить graphify: $_"
+    }
+}
+
+# 4.2. Верификация тестов (-Verify)
+if ($Verify) {
+    Write-Host "`n=== [Project Guardian] Запуск верификации тестов (-Verify) ===" -ForegroundColor Cyan
+    $testPassed = $true
+    $testFound = $false
+
+    # Проверка Python тестов
+    if (Test-Path (Join-Path $ProjectPath "tests") -or (Get-ChildItem -Path $ProjectPath -Filter "test_*.py" -Recurse -File -ErrorAction SilentlyContinue)) {
+        $testFound = $true
+        Write-Host "Обнаружены тесты Python. Запуск pytest..." -ForegroundColor Gray
+        & python -m pytest $ProjectPath -q 2>$null
+        if ($LASTEXITCODE -ne 0) { $testPassed = $false }
+    }
+
+    # Проверка npm test
+    $pkgJson = Join-Path $ProjectPath "package.json"
+    if (-not $testFound -and (Test-Path $pkgJson)) {
+        try {
+            $pkg = Get-Content $pkgJson -Raw | ConvertFrom-Json
+            if ($pkg.scripts.test -and $pkg.scripts.test -notmatch "no test specified") {
+                $testFound = $true
+                Write-Host "Обнаружен npm test. Запуск..." -ForegroundColor Gray
+                & npm test --prefix $ProjectPath --silent 2>$null
+                if ($LASTEXITCODE -ne 0) { $testPassed = $false }
+            }
+        } catch {}
+    }
+
+    if ($testFound) {
+        if (-not $testPassed) {
+            Write-Error "Верификация тестов провалена! Устраните ошибки перед сохранением чекпоинта."
+            return
+        } else {
+            Write-Host "[OK] Все тесты успешно пройдены!" -ForegroundColor Green
+        }
+    } else {
+        Write-Host "Тесты в проекте не обнаружены, проверка пропущена." -ForegroundColor Gray
     }
 }
 
