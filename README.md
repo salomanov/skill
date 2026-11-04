@@ -1,4 +1,4 @@
-﻿# Project Guardian — Universal Development Guardian for Antigravity
+# Project Guardian — Universal Development Guardian for Antigravity
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Platform: Windows PowerShell](https://img.shields.io/badge/Platform-PowerShell-blue.svg)]()
@@ -16,7 +16,7 @@
 ## Ключевые возможности
 
 1. 🚦 **Security Gate (исполняемый)**: `security-gate.ps1` находит утёкшие секреты, отключённую
-   авторизацию, `curl | sh`, `shell=True`, `verify=False` и синтаксические ошибки. Возвращает код 1 —
+   авторизацию, `curl | sh`, `shell=True`, `verify=False` и синтаксические ошибки (Python, Node.js, Bash, PowerShell). Возвращает код 1 —
    коммит не проходит, пока не исправлено. Осознанные исключения — `.security-gate-allow` с причиной.
 2. 🔄 **Git Auto-Commit** (пуш только по явному `-Push`): коммит при наличии `remote`.
 3. 🧠 **Universal Project Memory (`PROJECT_STATE.md`)**: сохранение контекста проекта — агент сразу понимает стек, команды запуска и статус при открытии нового диалога.
@@ -29,6 +29,7 @@
 7. 📊 **Mandatory Graphify**: построение графа зависимостей кодовой базы для любого проекта.
 8. ⚡ **Ponytail Pragmatic Mode**: жесткий режим борьбы с оверинжинирингом — чистый минимальный код, экономия более 50% токенов, отсечение ненужных библиотек. Не применяется к аутентификации и обработке секретов.
 9. 🩺 **Productivity Suite**: экспресс-диагностика окружения (`doctor.ps1`), бесшовный перенос контекста в новый диалог (`prepare-handoff.ps1`), безопасная очистка бэкапов (`clean-backups.ps1`), сканер секретов и генератор `.env.example` (`gen-env.ps1`), авто-тестирование перед коммитом (`checkpoint.ps1 -Verify`).
+10. 🗂️ **Multi-Project Workspace Protection**: изолированные чекпоинты и проверки подпроектов в составных воркспейсах/монорепозиториях без раздувания архивов родительской папки.
 
 ---
 
@@ -38,7 +39,7 @@
 /
 ├── SKILL.md                          # Манифест скилла с триггерами и регламентом
 ├── scripts/
-│   ├── checkpoint.ps1                # Универсальный скрипт бэкапа (код / web / desktop / firmware / -Verify)
+│   ├── checkpoint.ps1                # Универсальный скрипт бэкапа (код / web / desktop / firmware / -Verify / -SubProject)
 │   ├── doctor.ps1                    # Экспресс-диагностика окружения, Git и компонентов
 │   ├── prepare-handoff.ps1           # Генерация ультракомпактного контекста для нового диалога (.agents/HANDOFF.md)
 │   ├── clean-backups.ps1             # Безопасная ротация промежуточных бэкапов (-DryRun)
@@ -99,8 +100,19 @@
 
 Что проверяется: секреты и приватные ключи в трекаемых файлах, дефолтные пароли,
 `auth.enabled = false`, `verify=False`, `shell=True`, `curl | sh`, `python3 -c`,
-`chmod 777`, wildcard CORS, синтаксис Python/JS/sh, а с `-CheckLinks` — доступность URL.
+`chmod 777`, wildcard CORS, синтаксис Python/JS/sh/ps1, а с `-CheckLinks` — доступность URL.
 
 Осознанные исключения (например, стандартный пароль панели по требованию владельца)
 живут в `<проект>/.security-gate-allow`, по строке с причиной после `#`. Исключения печатаются
 в отчёте — они не «зеленеют» молча, но и не блокируют сборку.
+
+### 7. Изоляция в составных воркспейсах (монорепозиториях)
+
+Если в одной общей папке находятся несколько отдельных проектов (например, `Router_Workspace/Router_api`, `Router_Workspace/Opds`):
+```powershell
+# Чекпоинт конкретного подпроекта (изолированный бэкап):
+& ".\scripts\checkpoint.ps1" -ProjectPath "E:\Projects\Router_Workspace\Opds" -Message "Обновление OPDS"
+# или коротко:
+& ".\scripts\checkpoint.ps1" -SubProject "Opds" -Message "Обновление OPDS"
+```
+Скрипт автоматически определяет активный подпроект по Git-изменениям и сохраняет снимки строго в `Opds/.backups/`, а при создании бэкапа родительской папки исключает вложенные проекты, защищая диск от гигабайтных дубликатов.

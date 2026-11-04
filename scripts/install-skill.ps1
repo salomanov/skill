@@ -1,7 +1,7 @@
 ﻿param(
     [Parameter(Mandatory=$true)]
     [string]$SkillName,
-    [string]$DestDir = "C:\Users\Salomanov\.gemini\config\skills"
+    [string]$DestDir = (Join-Path $HOME ".gemini\config\skills")
 )
 
 $ErrorActionPreference = "Stop"
@@ -27,6 +27,10 @@ function Download-GitHubDirectory {
 
     $apiUrl = "https://api.github.com/repos/sickn33/agentic-awesome-skills/contents/$RepoPath"
     $headers = @{ "User-Agent" = "ProjectGuardian-SkillInstaller" }
+    $ghToken = if ($env:GITHUB_TOKEN) { $env:GITHUB_TOKEN } elseif ($env:GH_TOKEN) { $env:GH_TOKEN } else { $null }
+    if ($ghToken) {
+        $headers["Authorization"] = "Bearer $ghToken"
+    }
 
     try {
         $response = Invoke-RestMethod -Uri $apiUrl -Headers $headers -TimeoutSec 15
@@ -65,6 +69,7 @@ if ($apiSuccess -and (Test-Path (Join-Path $targetSkillDir "SKILL.md"))) {
         Invoke-WebRequest -Uri $rawUrl -OutFile $targetSkillFile -UseBasicParsing -TimeoutSec 20 | Out-Null
         if (Test-Path $targetSkillFile) {
             $installed = $true
+            Write-Host "  [Инфо]: Установлена базовая версия скилла (SKILL.md)." -ForegroundColor Gray
         }
     } catch {
         Write-Warning "Не удалось загрузить скилл '$SkillName': $_"

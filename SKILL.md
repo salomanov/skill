@@ -3,8 +3,9 @@ name: project-guardian
 description: >-
   CRITICAL MANDATORY CORE SKILL. Always active by default across ALL conversations, dialogues, and workspaces.
   Use for EVERY task, coding session, refactoring, debugging, architecture, building, or question across all
-  projects (Web, Desktop, Firmware, Backend). Manages project memory (PROJECT_STATE.md), safety checkpoints,
-  security gates, failure logging, rollback, and autonomous skill discovery.
+  projects (Web, Desktop, Firmware, Backend), including security audits, code reviews, and multi-project workspaces.
+  Manages project memory (PROJECT_STATE.md), safety checkpoints, security gates, failure logging, rollback,
+  multi-project boundaries, and autonomous skill discovery.
 ---
 # Project Guardian (Универсальный Хранитель Проекта)
 
@@ -20,6 +21,8 @@ description: >-
 В корне любого проекта (веб, десктоп или прошивка) ведется файл `PROJECT_STATE.md`:
 - **При старте диалога**: агент считывает его и моментально подхватывает контекст (цель, стек, текущее состояние, команды запуска/сборки, открытые задачи).
 - **По завершении этапа**: агент актуализирует статус и фиксирует журнал изменений.
+- **В составных воркспейсах** (где в одной рабочей папке лежит несколько проектов, например `Router_Workspace/Router_api`, `Router_Workspace/Opds`):
+  агент обязан определить активный подпроект и считывать `PROJECT_STATE.md` именно этого подпроекта!
 - Эталонная структура: [`./references/PROJECT_STATE_TEMPLATE.md`](./references/PROJECT_STATE_TEMPLATE.md).
 
 ---
@@ -30,6 +33,11 @@ description: >-
 ```powershell
 # Автоматический чекпоинт кода (перед правками):
 & "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\checkpoint.ps1" -Message "Рефакторинг логики"
+
+# В составном воркспейсе — чекпоинт конкретного подпроекта (ОБЯЗАТЕЛЬНО указывать -ProjectPath или -SubProject):
+& "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\checkpoint.ps1" -ProjectPath "E:\Projects\Router_Workspace\Opds" -Message "Правка API"
+# Либо через флаг -SubProject:
+& "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\checkpoint.ps1" -SubProject "Opds" -Message "Правка API"
 
 # Релиз веб-сайта (сохраняет продакшн сборку из dist/build):
 & "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\checkpoint.ps1" -Message "Релиз сайта v1.0" -Category "Web" -Release
@@ -84,6 +92,7 @@ description: >-
   ```powershell
   & "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\rollback.ps1" -TargetCheckpoint "desktop_release_2026-09-28_15-00-00"
   ```
+- В составном воркспейсе всегда передавайте `-ProjectPath` целевого подпроекта, чтобы не затронуть чужие файлы.
 
 ---
 
@@ -92,7 +101,7 @@ description: >-
 В состав скилла входят практичные скрипты для автоматизации рутины:
 
 ### 5.1 🩺 Экспресс-диагностика окружения и проекта (`doctor.ps1`)
-Быстрый светофор готовности проекта (рантаймы, статус Git, синхронизация с remote, проверки безопасности, актуальность `PROJECT_STATE.md`):
+Быстрый светофор готовности проекта (рантаймы, статус Git, синхронизация с remote, проверки безопасности, актуальность `PROJECT_STATE.md`, обнаружение подпроектов):
 ```powershell
 & "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\doctor.ps1"
 ```
@@ -171,11 +180,11 @@ description: >-
 ```
 
 Скрипт возвращает ненулевой код при любом срабатывании: секреты в трекаемых файлах, синтаксические
-ошибки, антипаттерны (`| sh`, `shell=True`, `verify=False`, `auth.enabled = false`, `python3 -c`),
+ошибки (Python, Node.js, Bash, PowerShell), антипаттерны (`| sh`, `shell=True`, `verify=False`, `auth.enabled = false`, `python3 -c`),
 битые ссылки на скрипты. Осознанные исключения — только списком в `.security-gate-allow` с причиной
 после `#`; исключение печатается в отчёте, а не проглатывается молча.
 
-### 8.1 🔑 Аутентификация и секреты
+### 9.1 🔑 Аутентификация и секреты
 
 - Аутентификация строится ТОЛЬКО на секрете, который реально существует на устройстве: файл с хэшем
   (`0600`) либо переменная окружения. Пароль задаётся при установке и меняется владельцем.
@@ -196,7 +205,7 @@ description: >-
 - Пароль никогда не пишется в лог (в том числе в стартовый баннер сервиса).
 - Для сетевых сервисов с грубым перебором — блокировка по IP после N неудач.
 
-### 8.2 🚪 Не отключать защиту ради удобства
+### 9.2 🚪 Не отключать защиту ради удобства
 
 - Запрещено ослаблять существующий контроль безопасности ради UX: `auth.enabled = false`,
   `--insecure`, отключение проверки сертификата, `chmod 777`, `Access-Control-Allow-Origin: *`
@@ -208,14 +217,14 @@ description: >-
   (`exec`, `shell`, `system`, перезапуск/обновление), и выставлять наружу сервис, который сам
   авторизации не умеет (его закрывают прокси с проверкой сессии на loopback-порту).
 
-### 8.3 ⏱️ Таймауты (No Infinite Hangs)
+### 9.3 ⏱️ Таймауты (No Infinite Hangs)
 
 - Каждый вызов `subprocess.run()`, `check_output()`, `curl`, `urllib.request.urlopen()` ОБЯЗАН иметь
   явный `timeout=...`. Зависшая команда или обрыв сети не должны блокировать поток или сервер навсегда.
 - Долгие операции (установка, обновление) дополнительно защищаются неблокирующим локом:
   второй запрос получает `409`, а не встаёт в очередь навсегда.
 
-### 8.4 🛡️ Установщики и загрузки
+### 9.4 🛡️ Установщики и загрузки
 
 - Все сетевые загрузки — `curl -fsSL` (флаг `-f` обязателен: при 404 curl падает, а не сохраняет HTML).
 - Запрещено `curl … | sh` и `wget … | sh`: статус пайплайна принадлежит `sh`, ошибка загрузки теряется
@@ -225,13 +234,13 @@ description: >-
   всех шагов, иначе — перечень упавших шагов и ненулевой код возврата.
 - Скачанный файл проверяется на непустоту ПЕРЕД запуском.
 
-### 8.5 🔗 Артефакты и ссылки
+### 9.5 🔗 Артефакты и ссылки
 
 - Каждый путь/URL, на который ссылается код (команда установки в каталоге, download URL, команда в
   README), обязан существовать: локальный файл — `Test-Path`, URL — `curl -fsSI` с кодом 200.
   Проверять списком перед коммитом. Ссылка на «когда-нибудь появится» — это сломанная установка.
 
-### 8.6 ⚡ Ресурсы и память (Resource & Memory Guardrails)
+### 9.6 ⚡ Ресурсы и память (Resource & Memory Guardrails)
 
 - Ограничение размера входящих данных (`Content-Length` не более 64–256 КБ на маломощных роутерах
   и контроллерах), лимит длины команд, обрезка вывода (64 КБ) перед отправкой в браузер.
@@ -289,12 +298,12 @@ description: >-
     Этот способ гарантированно работает на любых минималистичных прошивках без внешних зависимостей.
 
 ### 5. Git Push & Non-Fast-Forward
-* **Причина сбоев:** `git push` падает с `[rejected] non-fast-forward`, если локальная ветка отстает от удаленной (например, при правках в двух репозиториях).
-* **Железное правило:** Перед коммитом и пушем всегда выполнять `git pull --rebase` или проверять синхронизацию веток.
+* **Причина сбоев:** `git push` падает с `[rejected] non-fast-forward`, если локальная ветка отстает от удаленной.
+* **Железное правило:** Перед пушем всегда выполнять `git pull --rebase` или проверять синхронизацию веток. Пуш в remote — только с явным флагом `-Push`.
 
 ---
 
-## 10. Concurrency Gate (дедлоки и параллельные запросы)
+## 11. Concurrency Gate (дедлоки и параллельные запросы)
 
 Сервер на `ThreadingMixIn`/`daemon_threads` ломается тихо: поток просто встаёт навсегда, и внешне это
 выглядит как «зависшая панель». Правила:
@@ -314,7 +323,7 @@ description: >-
 
 ---
 
-## 11. Regression Gate (не сломать уже исправленное)
+## 12. Regression Gate (не сломать уже исправленное)
 
 - **Перед задачей** прочитать раздел «Известные исправления / Regressions» в `PROJECT_STATE.md`.
 - Каждое исправленное поведение заносится туда одной строкой (симптом → причина → что сделано)
@@ -326,7 +335,7 @@ description: >-
 
 ---
 
-## 12. Изоляция проектов и протокол рекомендаций (AGENT_RECOMMENDATIONS.md)
+## 13. Изоляция проектов и протокол рекомендаций (AGENT_RECOMMENDATIONS.md)
 
 Когда агент находится в диалоге одного проекта, ему **строго запрещено напрямую изменять код или делать коммиты в других проектах**. Все внешние проекты на диске рассматриваются в режиме **Read-Only**.
 
@@ -351,7 +360,38 @@ description: >-
 
 ---
 
-## 13. Definition of Done
+## 14. Работа в составных воркспейсах и монорепозиториях (Multi-Project Workspaces)
+
+Частая ситуация: в одной общей папке (например, `Router_Workspace`) находятся несколько отдельных подпроектов (`Router_api`, `Opds`, `Tuya`, `MQTT`), для каждого из которых ведется собственный диалог и собственный `PROJECT_STATE.md`.
+
+### 🚨 Главная ловушка: Раздувание бэкапов родительской папки
+Если агент запускает `checkpoint.ps1` без параметров, по умолчанию скрипт берет текущий рабочий каталог воркспейса `(Get-Location).Path`. В результате скрипт копирует в `.backups/` **весь воркспейс целиком вместе со всеми соседними подпроектами**, создавая гигабайтные дубликаты!
+
+### 🛡️ Железные правила для составных воркспейсов:
+1. **Определение активного подпроекта на старте**:
+   При входе в диалог агент проверяет: если текущий каталог содержит вложенные папки с собственными `PROJECT_STATE.md`, агент обязан идентифицировать, в каком именно подпроекте идет работа (по теме запроса пользователя или по `git status`).
+2. **Всегда передавать `-ProjectPath` или `-SubProject`**:
+   Все скрипты Guardian обязаны вызываться с указанием пути к конкретному подпроекту:
+   ```powershell
+   # Создание чекпоинта подпроекта:
+   & "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\checkpoint.ps1" -ProjectPath "E:\Projects\Router_Workspace\Opds" -Message "Обновление OPDS"
+   # Или коротко через флаг -SubProject:
+   & "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\checkpoint.ps1" -SubProject "Opds" -Message "Обновление OPDS"
+
+   # Security Gate только для подпроекта:
+   & "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\security-gate.ps1" -ProjectPath "E:\Projects\Router_Workspace\Opds"
+
+   # Откат только для подпроекта:
+   & "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\rollback.ps1" -ProjectPath "E:\Projects\Router_Workspace\Opds"
+   ```
+3. **Автоопределение в `checkpoint.ps1`**:
+   Скрипт `checkpoint.ps1` умеет автоматически обнаруживать подпроекты по незакоммиченным изменениям в Git. Если изменения локализованы внутри `Opds/`, чекпоинт будет автоматически направлен в папку `Opds/.backups/`.
+4. **Защита корня от дублирования**:
+   При осознанном создании чекпоинта родительской папки вложенные подпроекты (имеющие собственный `PROJECT_STATE.md`) **автоматически исключаются из бэкапа**, если явно не передан флаг `-IncludeSubprojects`.
+
+---
+
+## 15. Definition of Done
 
 Задача закрыта, только если в финальном отчёте есть:
 
@@ -363,4 +403,5 @@ description: >-
 5. Явное перечисление того, что **НЕ проверено** на живом устройстве (локальные тесты ≠ работа на
    роутере/железе).
 6. Ничего не запушено без явной команды владельца.
-7. Полное соблюдение границ проекта: не затронут код чужих репозиториев (все внешние предложения оформлены через AGENT_RECOMMENDATIONS.md).
+7. Полное соблюдение границ проекта: не затронут код чужих репозиториев (все внешние предложения оформлены через `AGENT_RECOMMENDATIONS.md`).
+8. В составных воркспейсах: чекпоинт и security-gate выполнены изолированно для целевого подпроекта, без раздувания архивов общей папки.

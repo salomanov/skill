@@ -4,6 +4,10 @@
 
 $ErrorActionPreference = "Continue"
 
+if ($ProjectPath -and (Test-Path $ProjectPath)) {
+    $ProjectPath = (Resolve-Path $ProjectPath).Path
+}
+
 Write-Host "`n=== [Project Guardian] Диагностика Окружения и Проекта (Doctor) ===" -ForegroundColor Cyan
 Write-Host "Проект: $ProjectPath`n"
 
@@ -120,6 +124,15 @@ if (Test-Path $stateFile) {
     Report-Item "Память проекта (PROJECT_STATE.md)" "WARN" "Файл памяти отсутствует"
 }
 
+# Проверка на составной воркспейс
+$subProjects = @(Get-ChildItem -Path $ProjectPath -Directory -ErrorAction SilentlyContinue | Where-Object {
+    $_.Name -notmatch '^(\.git|\.backups|node_modules|\.venv|venv|scratch)$' -and
+    (Test-Path (Join-Path $_.FullName "PROJECT_STATE.md"))
+})
+if ($subProjects.Count -gt 0) {
+    Report-Item "Составной воркспейс" "OK" "Обнаружены подпроекты ($($subProjects.Count)): $($subProjects.Name -join ', ')"
+}
+
 # .backups
 $backupDir = Join-Path $ProjectPath ".backups"
 if (Test-Path $backupDir) {
@@ -162,7 +175,7 @@ if (Test-Path $secGateScript) {
     }
 }
 
-Write-Host "`n" + ("=" * 60)
+Write-Host ("`n" + ("=" * 60))
 if ($allOk) {
     Write-Host "ИТОГ: Проект в отличном состоянии, блокеров нет. Готов к работе!" -ForegroundColor Green
 } else {

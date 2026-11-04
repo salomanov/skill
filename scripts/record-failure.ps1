@@ -33,13 +33,17 @@ param(
     [string]$Solution = "Не указано",
 
     [Parameter(Mandatory=$false)]
-    [string]$ProjectPath = $PWD.Path,
+    [string]$ProjectPath = (Get-Location).Path,
 
     [Parameter(Mandatory=$false)]
     [switch]$NoCheckpoint
 )
 
 $ErrorActionPreference = "Stop"
+
+if ($ProjectPath -and (Test-Path $ProjectPath)) {
+    $ProjectPath = (Resolve-Path $ProjectPath).Path
+}
 
 Write-Host "`n=== [Project Guardian] ⚠️ Немедленная фиксация инцидента/ошибки ===" -ForegroundColor Yellow
 Write-Host "Проект: $ProjectPath"

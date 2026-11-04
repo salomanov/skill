@@ -1,10 +1,24 @@
 ﻿param(
     [string]$ProjectPath = (Get-Location).Path,
+    [string]$SubProject = "",
     [string]$TargetCheckpoint = "",
     [switch]$List = $false
 )
 
 $ErrorActionPreference = "Stop"
+
+# 0. Нормализация пути и поддержка подпроектов
+if ($ProjectPath -and (Test-Path $ProjectPath)) {
+    $ProjectPath = (Resolve-Path $ProjectPath).Path
+}
+
+if ($SubProject) {
+    $cand = Join-Path $ProjectPath $SubProject
+    if (Test-Path $cand) {
+        $ProjectPath = (Resolve-Path $cand).Path
+        Write-Host "[Project Guardian] 🎯 Выбран подпроект: $ProjectPath" -ForegroundColor Cyan
+    }
+}
 
 Write-Host "=== [Project Guardian] Менеджер восстановления и отката ===" -ForegroundColor Yellow
 Write-Host "Проект: $ProjectPath"
@@ -17,12 +31,13 @@ if (-not (Test-Path $backupRoot)) {
     return
 }
 
-$checkpoints = Get-ChildItem -Path $backupRoot -Directory | Where-Object { 
+# Сортировка по имени дает строгий хронологический порядок для меток ISO yyyy-MM-dd_HH-mm-ss
+$checkpoints = @(Get-ChildItem -Path $backupRoot -Directory | Where-Object { 
     $_.Name -like "checkpoint*" -or 
     $_.Name -like "firmware_success_*" -or 
     $_.Name -like "desktop_release_*" -or 
     $_.Name -like "web_release_*"
-} | Sort-Object CreationTime -Descending
+} | Sort-Object Name -Descending)
 
 if ($checkpoints.Count -eq 0) {
     Write-Host "В папке .backups пока нет сохраненных точек восстановления." -ForegroundColor Gray
@@ -84,12 +99,22 @@ catch {
     Write-Warning "Ошибка при копировании файлов из бэкапа: $_"
 }
 
-# 3. Если Git активен, выводим статус
+# 3. Если Git активен, выводим статус и проверяем наличие новых файлов
 try {
     $gitCheck = & git -C $ProjectPath rev-parse --is-inside-work-tree 2>$null
     if ($LASTEXITCODE -eq 0 -and $gitCheck.Trim() -eq "true") {
-        Write-Host "Статус Git после отката:" -ForegroundColor Cyan
+        Write-Host "`nСтатус Git после отката:" -ForegroundColor Cyan
         & git -C $ProjectPath status --short
+
+        # Проверка наличия созданных новых файлов (untracked), которых не было в бэкапе
+        $untracked = & git -C $ProjectPath ls-files --others --exclude-standard 2>$null
+        if ($untracked) {
+            Write-Host "`n[ВНИМАНИЕ] Обнаружены новые файлы, созданные после точки бэкапа:" -ForegroundColor Yellow
+            foreach ($u in $untracked) {
+                Write-Host "  ? $u" -ForegroundColor DarkYellow
+            }
+            Write-Host "Для полной очистки от новых неотслеживаемых файлов выполните: git clean -fd" -ForegroundColor Gray
+        }
     }
 } catch {
     # Git опционален

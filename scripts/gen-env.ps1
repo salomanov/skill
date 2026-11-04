@@ -5,6 +5,11 @@
 
 $ErrorActionPreference = "Stop"
 
+# 0. Нормализация пути
+if ($ProjectPath -and (Test-Path $ProjectPath)) {
+    $ProjectPath = (Resolve-Path $ProjectPath).Path
+}
+
 Write-Host "`n=== [Project Guardian] Генератор безопасного шаблона .env.example ===" -ForegroundColor Cyan
 Write-Host "Проект: $ProjectPath"
 
@@ -21,7 +26,7 @@ $files = Get-ChildItem -Path $ProjectPath -Recurse -File -Include $includeExts -
     $full = $_.FullName
     $skip = $false
     foreach ($ex in $excludeDirs) {
-        if ($full -like "*\$ex\*") { $skip = $true; break }
+        if ($full -match "[\\/]$([regex]::Escape($ex))[\\/]") { $skip = $true; break }
     }
     if ($OutputFile -and ($_.Name -eq $OutputFile -or $_.FullName -eq $targetPath)) {
         $skip = $true
