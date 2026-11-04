@@ -1,13 +1,11 @@
-﻿---
+---
 name: project-guardian
 description: >-
-  Универсальный хранитель проекта для любых сфер разработки: Веб-сайты (Web), Программы для ПК (Desktop),
-  Прошивки микроконтроллеров (Firmware) и Backend. Автоматическое сохранение памяти проекта (PROJECT_STATE.md),
-  создание контрольных точек и несгораемых релизных бэкапов без перезаписи, безопасный откат (rollback),
-  коммит и пуш в Git при наличии remote, а также автономный подбор скиллов из каталога sickn33/agentic-awesome-skills.
-  Включает исполняемый security-gate, аудит безопасности и код-ревью перед коммитом.
+  CRITICAL MANDATORY CORE SKILL. Always active by default across ALL conversations, dialogues, and workspaces.
+  Use for EVERY task, coding session, refactoring, debugging, architecture, building, or question across all
+  projects (Web, Desktop, Firmware, Backend). Manages project memory (PROJECT_STATE.md), safety checkpoints,
+  security gates, failure logging, rollback, and autonomous skill discovery.
 ---
-
 # Project Guardian (Универсальный Хранитель Проекта)
 
 Скилл полностью адаптирован под три ключевых направления:
