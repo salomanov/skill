@@ -23,17 +23,17 @@
 #>
 
 param(
-    [Parameter(Mandatory=$true)]
-    [string]$Title,
+    [Parameter(Mandatory=$true, Position=0)]
+    [string[]]$Title,
 
     [Parameter(Mandatory=$false)]
-    [string]$Symptom = "Не указан",
+    [string[]]$Symptom = @("Не указан"),
 
     [Parameter(Mandatory=$false)]
-    [string]$RootCause = "Не указана",
+    [string[]]$RootCause = @("Не указана"),
 
     [Parameter(Mandatory=$false)]
-    [string]$Solution = "Не указано",
+    [string[]]$Solution = @("Не указано"),
 
     [Parameter(Mandatory=$false)]
     [string]$ProjectPath = (Get-Location).Path,
@@ -42,13 +42,27 @@ param(
     [string]$SubProject = "",
 
     [Parameter(Mandatory=$false)]
-    [switch]$NoCheckpoint
+    [switch]$NoCheckpoint,
+
+    [Parameter(ValueFromRemainingArguments=$true)]
+    [string[]]$ExtraArgs
 )
 
 $ErrorActionPreference = "Stop"
 $env:PYTHONIOENCODING = "utf-8"
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
+
+# Нормализация текстовых аргументов: поддержка пробелов и вызовов без кавычек
+if ($ExtraArgs) {
+    $allTitle = @($Title) + @($ExtraArgs)
+    $Title = ($allTitle -join " ").Trim()
+} elseif ($Title -is [array]) {
+    $Title = ($Title -join " ").Trim()
+}
+if ($Symptom -is [array]) { $Symptom = ($Symptom -join " ").Trim() }
+if ($RootCause -is [array]) { $RootCause = ($RootCause -join " ").Trim() }
+if ($Solution -is [array]) { $Solution = ($Solution -join " ").Trim() }
 
 # 0. Нормализация пути и автоопределение подпроекта в составных воркспейсах
 if ($ProjectPath -and (Test-Path $ProjectPath)) {

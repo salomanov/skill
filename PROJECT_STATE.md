@@ -77,6 +77,10 @@
   - В `checkpoint.ps1` проекты микроконтроллеров разделены на промежуточные чекпоинты (`checkpoint_firmware_*`) и несгораемые релизные прошивки (`firmware_success_*`, только с флагом `-Firmware` или `-Release`).
   - В `rollback.ps1` и `doctor.ps1` добавлено распознавание `checkpoint_firmware_*`.
   - В `SKILL.md` (раздел 10.2) и `PROJECT_STATE_TEMPLATE.md` внесены правила запуска PlatformIO (`$env:PYTHONIOENCODING='utf-8'; pio run`).
+- [x] **v1.6.3**: Рекомендации AGENT_RECOMMENDATIONS (Zero Exit Code 1: Read Credentials First, Targeted Tests, Robust Argument Parsing):
+  - В `SKILL.md` (10.6, 10.7) и глобальные правила `AGENTS.md` внедрены правила «Read Credentials & Config First» и «Targeted Test Discovery».
+  - В `checkpoint.ps1`, `record-failure.ps1` и `prepare-handoff.ps1` добавлена защита от неэкранированных пробелов в аргументах (`ValueFromRemainingArguments` + авто-склейка строк).
+  - Скрипты сохранены с UTF-8 BOM, пройден гейт безопасности.
 
 ## 4a. Известные исправления (Regressions — не сломать повторно)
 1. Раздел 8/9 не должен снова разрешать «пароль по умолчанию» — именно эта формулировка легализовала бэкдор.
@@ -88,8 +92,21 @@
 7. `record-failure.ps1` обязан изолировать запись `docs/ERRORS_AND_FAILURES.md` в целевой подпроект в составных воркспейсах.
 8. CLI утилиты на Python (PlatformIO `pio`, `esptool`, `pip`, `uv`, `graphify`) в русской Windows обязаны запускаться с `$env:PYTHONIOENCODING = "utf-8"` и `[Console]::OutputEncoding = UTF8`, иначе падают с крахом `charmap cp1251 UnicodeEncodeError`.
 9. В `checkpoint.ps1` категория `Firmware` не должна безусловно выставлять `$Release = $true`: обычные чекпоинты кода и сбои создают `checkpoint_firmware_*`, а релиз с паспортом и тегом создается только по явному флагу `-Release` / `-Firmware`.
+10. Запрещено угадывать учетные данные (логины, пароли, порты) при создании scratch-скриптов; параметры обязаны предварительно считываться из конфигураций и `deploy.py`.
+11. Запрещен неявный запуск unittest/pytest `discover()` в корне составного воркспейса во избежание исполнения внутренних тестов пакетов из `site-packages`.
+12. Параметры сообщений в скриптах (`-Message`, `-Title`, `-NextGoal`) обязаны поддерживать неэкранированные пробелы и несколько позиционных аргументов (`ValueFromRemainingArguments`) во избежание сбоев парсера PowerShell.
 
 ## 5. История Изменений (Журнал сессий)
+
+- 🛡️ **Чекпоинт** [2026-11-06 03:28:14] (метка: 2026-11-06_03-28-14): feat: resolve second batch of AGENT_RECOMMENDATIONS for credentials and test discovery
+
+### [2026-11-06 03:25]
+- **Что сделано**: Внедрены рекомендации из `AGENT_RECOMMENDATIONS.md` (входящие из проекта NanoOPDS / Router_Workspace):
+  1. **Правило контекстных параметров (Read Credentials & Config First)**: В `SKILL.md` (раздел 10.6) и в глобальные правила `~/.gemini/config/AGENTS.md` (Правило 10) внедрен строгий запрет на хардкод и угадывание учетных данных при создании scratch-скриптов. Агент обязан считывать реальные параметры из конфигураций (`deploy.py`, `.env`, `PROJECT_STATE.md`).
+  2. **Таргетированное тестирование (Targeted Test Discovery)**: В `SKILL.md` (раздел 10.7) и `AGENTS.md` зафиксирован запрет неявного вызова `discover()` в корне составных воркспейсов во избежание запуска тестов библиотек из `site-packages`.
+  3. **Устойчивый парсинг аргументов PowerShell**: В `checkpoint.ps1`, `record-failure.ps1` и `prepare-handoff.ps1` параметры текстовых сообщений (`-Message`, `-Title`, `-NextGoal`) переведены на поддержку массивов и `ValueFromRemainingArguments`, устраняя ошибки парсера аргументов при вызовах без кавычек.
+  4. Обновлены и сохранены с UTF-8 BOM все затронутые скрипты, проверен гейт `security-gate.ps1`.
+- **Чекпоинт**: Релиз v1.6.3 (Zero Exit Code 1 Hardening & Argument Robustness).
 
 - 🛡️ **Чекпоинт** [2026-11-06 02:01:05] (метка: 2026-11-06_02-01-05): feat: resolve AGENT_RECOMMENDATIONS for Windows CLI encoding and firmware checkpoints
 

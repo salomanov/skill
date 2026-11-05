@@ -1,5 +1,6 @@
 ﻿param(
-    [string]$Message = "Automatic checkpoint",
+    [Parameter(Position=0)]
+    [string[]]$Message = @("Automatic checkpoint"),
     [switch]$Push = $false,   # Пуш в remote — только по явному -Push
     [switch]$NoPush = $false, # Совместимость со старыми вызовами
     [string]$Category = "Auto", # "Auto", "Code", "Web", "Desktop", "Firmware"
@@ -9,13 +10,26 @@
     [switch]$Verify = $false,    # Запустить авто-тесты перед чекпоинтом
     [string]$ProjectPath = (Get-Location).Path,
     [string]$SubProject = "",    # Явное указание подпроекта в составном воркспейсе / монорепозитории
-    [switch]$IncludeSubprojects = $false # При бэкапе корня воркспейса включать вложенные проекты
+    [switch]$IncludeSubprojects = $false, # При бэкапе корня воркспейса включать вложенные проекты
+    [Parameter(ValueFromRemainingArguments=$true)]
+    [string[]]$ExtraArgs
 )
 
 $ErrorActionPreference = "Stop"
 $env:PYTHONIOENCODING = "utf-8"
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
+
+# Нормализация $Message: поддержка неэкранированных пробелов, вызовов без кавычек и нескольких аргументов
+if ($ExtraArgs) {
+    $all = @($Message) + @($ExtraArgs)
+    $Message = ($all -join " ").Trim()
+} elseif ($Message -is [array]) {
+    $Message = ($Message -join " ").Trim()
+}
+if ([string]::IsNullOrWhiteSpace($Message)) {
+    $Message = "Automatic checkpoint"
+}
 
 # 0. Нормализация пути и автоопределение подпроекта в составных воркспейсах
 if ($ProjectPath -and (Test-Path $ProjectPath)) {

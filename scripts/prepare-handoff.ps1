@@ -1,13 +1,23 @@
 ﻿param(
     [string]$ProjectPath = (Get-Location).Path,
     [string]$SubProject = "",
-    [string]$NextGoal = ""
+    [Parameter(Position=0)]
+    [string[]]$NextGoal = @(""),
+    [Parameter(ValueFromRemainingArguments=$true)]
+    [string[]]$ExtraArgs
 )
 
 $ErrorActionPreference = "Continue"
 $env:PYTHONIOENCODING = "utf-8"
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
+
+if ($ExtraArgs) {
+    $all = @($NextGoal) + @($ExtraArgs)
+    $NextGoal = ($all -join " ").Trim()
+} elseif ($NextGoal -is [array]) {
+    $NextGoal = ($NextGoal -join " ").Trim()
+}
 
 # 0. Нормализация пути и поддержка подпроектов
 if ($ProjectPath -and (Test-Path $ProjectPath)) {
