@@ -3,6 +3,9 @@
 )
 
 $ErrorActionPreference = "Continue"
+$env:PYTHONIOENCODING = "utf-8"
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
 
 if ($ProjectPath -and (Test-Path $ProjectPath)) {
     $ProjectPath = (Resolve-Path $ProjectPath).Path
@@ -138,7 +141,7 @@ $backupDir = Join-Path $ProjectPath ".backups"
 if (Test-Path $backupDir) {
     $cps = Get-ChildItem -Path $backupDir -Directory -ErrorAction SilentlyContinue
     $totalBackups = ($cps | Measure-Object).Count
-    $releases = ($cps | Where-Object { $_.Name -like "*release*" -or $_.Name -like "*firmware*" } | Measure-Object).Count
+    $releases = ($cps | Where-Object { $_.Name -like "*release*" -or $_.Name -like "firmware_success_*" } | Measure-Object).Count
     Report-Item "Резервные копии (.backups/)" "OK" "Всего: $totalBackups (из них релизов/прошивок: $releases)"
 } else {
     Report-Item "Резервные копии (.backups/)" "WARN" "Папка еще не создана"

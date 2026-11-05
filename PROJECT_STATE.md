@@ -72,6 +72,11 @@
   - В `rollback.ps1` добавлена строгая хронологическая сортировка по именам папок и проверка появившихся неотслеживаемых файлов.
   - В `install-skill.ps1` устранен хардкод путей (переход на `$HOME`) и добавлена поддержка GitHub API токенов.
   - Устранены ошибки нумерации разделов в `SKILL.md` (9.1–9.6, Concurrency Gate 11, Добавлен раздел 14).
+- [x] **v1.6.2**: Рекомендации AGENT_RECOMMENDATIONS (Windows CLI UTF-8 & Firmware Checkpoint Separation):
+  - Во всех `.ps1` скриптах внедрена установка `$env:PYTHONIOENCODING = "utf-8"`, `[Console]::OutputEncoding = UTF8` и гарантирован UTF-8 BOM.
+  - В `checkpoint.ps1` проекты микроконтроллеров разделены на промежуточные чекпоинты (`checkpoint_firmware_*`) и несгораемые релизные прошивки (`firmware_success_*`, только с флагом `-Firmware` или `-Release`).
+  - В `rollback.ps1` и `doctor.ps1` добавлено распознавание `checkpoint_firmware_*`.
+  - В `SKILL.md` (раздел 10.2) и `PROJECT_STATE_TEMPLATE.md` внесены правила запуска PlatformIO (`$env:PYTHONIOENCODING='utf-8'; pio run`).
 
 ## 4a. Известные исправления (Regressions — не сломать повторно)
 1. Раздел 8/9 не должен снова разрешать «пароль по умолчанию» — именно эта формулировка легализовала бэкдор.
@@ -81,8 +86,20 @@
 5. Скрипты Guardian обязаны изолировать подпроекты в составных воркспейсах (`-ProjectPath`, `-SubProject`), чтобы исключить дублирование родительских папок и гигабайтный оверхед.
 6. Регулярные выражения для заголовков `PROJECT_STATE.md` не должны привязываться к жесткому номеру раздела (поддержка `## (?:\d+\.\s*)?`).
 7. `record-failure.ps1` обязан изолировать запись `docs/ERRORS_AND_FAILURES.md` в целевой подпроект в составных воркспейсах.
+8. CLI утилиты на Python (PlatformIO `pio`, `esptool`, `pip`, `uv`, `graphify`) в русской Windows обязаны запускаться с `$env:PYTHONIOENCODING = "utf-8"` и `[Console]::OutputEncoding = UTF8`, иначе падают с крахом `charmap cp1251 UnicodeEncodeError`.
+9. В `checkpoint.ps1` категория `Firmware` не должна безусловно выставлять `$Release = $true`: обычные чекпоинты кода и сбои создают `checkpoint_firmware_*`, а релиз с паспортом и тегом создается только по явному флагу `-Release` / `-Firmware`.
 
 ## 5. История Изменений (Журнал сессий)
+
+- 🛡️ **Чекпоинт** [2026-11-06 02:01:05] (метка: 2026-11-06_02-01-05): feat: resolve AGENT_RECOMMENDATIONS for Windows CLI encoding and firmware checkpoints
+
+### [2026-11-06 02:00]
+- **Что сделано**: Внедрены исправления по рекомендациям из `AGENT_RECOMMENDATIONS.md` (входящие от проекта «Ночник»):
+  1. **Защита от сбоя CP1251 UnicodeEncodeError**: Во всех скриптах PowerShell (`checkpoint.ps1`, `doctor.ps1`, `security-gate.ps1`, `rollback.ps1`, `clean-backups.ps1`, `record-failure.ps1`, `prepare-handoff.ps1`, `gen-env.ps1`, `install-skill.ps1`) внедрена принудительная инициализация кодировки UTF-8 (`$env:PYTHONIOENCODING = "utf-8"`, `[Console]::OutputEncoding = [System.Text.Encoding]::UTF8`, `$OutputEncoding = [System.Text.Encoding]::UTF8`). В манифест `SKILL.md` (раздел 10.2) и шаблон `PROJECT_STATE_TEMPLATE.md` добавлены железные правила запуска PlatformIO CLI (`$env:PYTHONIOENCODING='utf-8'; pio run`).
+  2. **Разделение чекпоинтов прошивки**: В `checkpoint.ps1` устранено безусловное присвоение `$Release = $true` для проектов категории `Firmware`. Обычные чекпоинты исходного кода и инциденты `record-failure.ps1` сохраняются как `checkpoint_firmware_*` без создания фиктивных тегов `[SUCCESS FLASH]` и паспортов `RELEASE_INFO.md`. Релизный бэкап `firmware_success_*` с сохранением бинарников, паспортом и уникальным тегом формируется строго по флагу `-Firmware` или `-Release`.
+  3. **Обновление rollback.ps1 и doctor.ps1**: В `rollback.ps1` добавлена дифференциация иконок для `checkpoint_firmware_*` (чекпоинт кода) и `firmware_success_*` (удачная прошивка). В `doctor.ps1` скорректирован подсчет несгораемых релизов прошивок.
+  4. Все скрипты `.ps1` сохранены с обязательным UTF-8 BOM для надежного парсинга в PowerShell 5.1.
+- **Чекпоинт**: Релиз v1.6.2 (Windows CLI UTF-8 Encoding & Firmware Checkpoint Separation).
 
 - 🛡️ **Чекпоинт** [2026-11-04 18:00:39] (метка: 2026-11-04_18-00-39): feat: record-failure subproject auto-detection and isolation
 ### [2026-11-04 18:00]

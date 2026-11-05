@@ -13,6 +13,9 @@
 )
 
 $ErrorActionPreference = "Stop"
+$env:PYTHONIOENCODING = "utf-8"
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
 
 # 0. Нормализация пути и автоопределение подпроекта в составных воркспейсах
 if ($ProjectPath -and (Test-Path $ProjectPath)) {
@@ -118,10 +121,15 @@ $categoryTitle = "Чекпоинт Кода"
 
 switch ($Category) {
     "Firmware" {
-        $backupPrefix = "firmware_success"
-        $categoryEmoji = "🔥"
-        $categoryTitle = "УДАЧНАЯ ПРОШИВКА (Firmware Flash)"
-        $Release = $true
+        if ($Release) {
+            $backupPrefix = "firmware_success"
+            $categoryEmoji = "🔥"
+            $categoryTitle = "УДАЧНАЯ ПРОШИВКА (Firmware Flash)"
+        } else {
+            $backupPrefix = "checkpoint_firmware"
+            $categoryEmoji = "🔥"
+            $categoryTitle = "Чекпоинт проекта прошивки"
+        }
     }
     "Desktop" {
         if ($Release) {
@@ -225,7 +233,7 @@ if (Test-Path $stateFile) {
     try {
         $stateContent = Get-Content $stateFile -Raw -Encoding UTF8
         $entryPrefix = switch ($Category) {
-            "Firmware" { "🔥 **УДАЧНАЯ ПРОШИВКА**" }
+            "Firmware" { if ($Release) { "🔥 **УДАЧНАЯ ПРОШИВКА**" } else { "🔥 **Чекпоинт (Прошивка)**" } }
             "Desktop"  { if ($Release) { "🖥️ **РЕЛИЗ ДЕСКТОП-ПРИЛОЖЕНИЯ**" } else { "🖥️ **Чекпоинт (ПК)**" } }
             "Web"      { if ($Release) { "🌐 **РЕЛИЗ ВЕБ-САЙТА**" } else { "🌐 **Чекпоинт (Web)**" } }
             default    { "🛡️ **Чекпоинт**" }
@@ -309,7 +317,7 @@ try {
     # 4. Сохранение релизных артефактов в зависимости от категории
     $savedArtifacts = @()
 
-    if ($Category -eq "Firmware") {
+    if ($Category -eq "Firmware" -and $Release) {
         $firmwareBinDir = Join-Path $currentBackupDir "firmware_binaries"
         New-Item -ItemType Directory -Path $firmwareBinDir -Force | Out-Null
         $binExtensions = @("*.bin", "*.hex", "*.elf", "*.uf2", "*.dfu", "*.img", "*.ota")
@@ -350,7 +358,7 @@ try {
     }
 
     # Генерация паспорта релиза
-    if ($Release -or $Category -eq "Firmware") {
+    if ($Release) {
         $passportContent = @"
 # Паспорт релиза: $backupPrefix [$timestamp]
 
@@ -399,7 +407,7 @@ if ($isGit) {
         $tagPrefix = $Category.ToLower()
 
         $commitPrefix = switch ($Category) {
-            "Firmware" { "firmware: [SUCCESS FLASH]" }
+            "Firmware" { if ($Release) { "firmware: [SUCCESS FLASH]" } else { "firmware: [checkpoint]" } }
             "Desktop"  { if ($Release) { "desktop: [RELEASE BUILD]" } else { "desktop: [checkpoint]" } }
             "Web"      { if ($Release) { "web: [PRODUCTION BUILD]" } else { "web: [checkpoint]" } }
             default    { "checkpoint:" }
@@ -414,7 +422,7 @@ if ($isGit) {
         }
 
         # Если это релиз или прошивка — создаем уникальный Git-тег с датой и временем
-        if ($Release -or $Category -eq "Firmware") {
+        if ($Release) {
             $tagName = "$tagPrefix-v$timestamp"
             & git -C $ProjectPath tag -a $tagName -m "Релиз ($Category): $Message ($readableDate)"
             Write-Host "[OK] Создан уникальный Git-тег: $tagName" -ForegroundColor Magenta
@@ -427,7 +435,7 @@ if ($isGit) {
             if ($currentBranch -and $currentBranch -ne "HEAD") {
                 Write-Host "Отправка изменений в origin/$currentBranch..." -ForegroundColor Cyan
                 & git -C $ProjectPath push origin $currentBranch
-                if ($Release -or $Category -eq "Firmware") {
+                if ($Release) {
                     & git -C $ProjectPath push origin --tags
                 }
                 if ($LASTEXITCODE -eq 0) {

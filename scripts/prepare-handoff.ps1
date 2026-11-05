@@ -5,6 +5,9 @@
 )
 
 $ErrorActionPreference = "Continue"
+$env:PYTHONIOENCODING = "utf-8"
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
 
 # 0. Нормализация пути и поддержка подпроектов
 if ($ProjectPath -and (Test-Path $ProjectPath)) {

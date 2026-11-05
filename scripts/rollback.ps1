@@ -6,6 +6,9 @@
 )
 
 $ErrorActionPreference = "Stop"
+$env:PYTHONIOENCODING = "utf-8"
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
 
 # 0. Нормализация пути и поддержка подпроектов
 if ($ProjectPath -and (Test-Path $ProjectPath)) {
@@ -49,7 +52,8 @@ if ($List) {
     Write-Host "`nДоступные точки восстановления (от новых к старым):" -ForegroundColor Cyan
     foreach ($cp in $checkpoints) {
         $icon = "🛡️ [Код]"
-        if ($cp.Name -like "firmware_success_*") { $icon = "🔥 [Прошивка]" }
+        if ($cp.Name -like "firmware_success_*") { $icon = "🔥 [Прошивка-Релиз]" }
+        elseif ($cp.Name -like "checkpoint_firmware_*") { $icon = "🔥 [Прошивка-Чекпоинт]" }
         elseif ($cp.Name -like "desktop_release_*") { $icon = "🖥️ [ПК-Релиз]" }
         elseif ($cp.Name -like "web_release_*") { $icon = "🌐 [Веб-Релиз]" }
         elseif ($cp.Name -like "checkpoint_web_*") { $icon = "🌐 [Веб-Чекпоинт]" }

@@ -46,6 +46,9 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$env:PYTHONIOENCODING = "utf-8"
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
 
 # 0. Нормализация пути и автоопределение подпроекта в составных воркспейсах
 if ($ProjectPath -and (Test-Path $ProjectPath)) {

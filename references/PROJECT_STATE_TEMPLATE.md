@@ -32,8 +32,8 @@
 - **Система контроля версий**: Git (remote URL, ветка)
 
 ## 5. Специфика Сборки и Запуска
-- **Команда разработки (Dev)**: (например, `npm run dev` или `python main.py`)
-- **Команда сборки / релиза (Build)**: (например, `npm run build` или `pyinstaller --onefile app.spec`)
+- **Команда разработки (Dev)**: (например, `npm run dev` или `python main.py`, для PlatformIO: `$env:PYTHONIOENCODING='utf-8'; pio run`)
+- **Команда сборки / релиза (Build)**: (например, `npm run build` или `pyinstaller --onefile app.spec`, для PlatformIO: `$env:PYTHONIOENCODING='utf-8'; pio run -t upload`)
 - **Порты / Точки входа**: (например, `http://localhost:3000` или `main.py`)
 - **Тесты / smoke-проверки**: (команда, которая проверяет основной сценарий)
 

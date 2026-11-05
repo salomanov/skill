@@ -45,8 +45,11 @@ description: >-
 # Релиз программы для ПК (сохраняет .exe, .msi, библиотеки с SHA256):
 & "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\checkpoint.ps1" -Message "Сборка ПК утилиты v1.0" -Category "Desktop" -Release
 
-# Удачная прошивка микроконтроллера (сохраняет .bin, .hex, .elf с SHA256):
+# Удачная прошивка микроконтроллера (сохраняет .bin, .hex, .elf с SHA256, архив firmware_success_*):
 & "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\checkpoint.ps1" -Message "Успешный flash v1.2" -Firmware
+
+# Обычный чекпоинт кода прошивки (перед рефакторингом или правками, сохраняет checkpoint_firmware_* без тега и паспорта):
+& "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\checkpoint.ps1" -Message "Правка логики опроса датчиков"
 ```
 
 ### Принцип «Несгораемых архивов»:
@@ -280,14 +283,25 @@ description: >-
     *(Никогда не вызывать `bash -c "..."` инлайном из PowerShell во избежание ада двойного экранирования).*
 
 ### 2. Защита от краха кодировки Windows (CP1251 UnicodeEncodeError)
-* **Причина сбоев:** В русскоязычной Windows PowerShell использует консольную кодировку `CP1251`. При попытке Python напечатать эмодзи (`👉`, `🔒`), типографские символы, псевдографику или спецсимволы команда мгновенно падает с `UnicodeEncodeError: 'charmap' codec can't encode character`.
-* **Железное правило:** В любых вспомогательных Python-скриптах в первой же строке указывать:
-  ```python
-  import sys
-  if hasattr(sys.stdout, 'reconfigure'):
-      sys.stdout.reconfigure(encoding='utf-8')
-  ```
-  Либо устанавливать `$env:PYTHONIOENCODING='utf-8'` перед вызовом Python.
+* **Причина сбоев:** В русскоязычной Windows PowerShell использует консольную кодировку `CP1251`. При попытке Python или CLI-инструментов на Python (`pio`, `esptool`, `pip`, `uv`, `graphify`) напечатать эмодзи (`👉`, `🔒`), типографские символы, псевдографику (рамки сборки PlatformIO, прогресс-бары) команда мгновенно падает с exit code 1 (`UnicodeEncodeError: 'charmap' codec can't encode character ... File "encodings\cp1251.py"`).
+* **Железное правило:**
+  - **Для CLI утилит (PlatformIO `pio`, `esptool`, `pip`, `uv`):** ВСЕГДА перед запуском устанавливать переменные окружения и кодировку консоли:
+    ```powershell
+    $env:PYTHONIOENCODING = "utf-8"
+    [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+    $OutputEncoding = [System.Text.Encoding]::UTF8
+    ```
+    Либо запускать сборку/прошивку связкой:
+    ```powershell
+    $env:PYTHONIOENCODING='utf-8'; pio run
+    $env:PYTHONIOENCODING='utf-8'; pio run -t upload
+    ```
+  - **Для вспомогательных Python-скриптов:** В первой же строке указывать:
+    ```python
+    import sys
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8')
+    ```
 
 ### 3. Запрет на вызов несуществующих Linux-утилит в Windows
 * **Причина сбоев:** Попытка вызвать в PowerShell программы из Linux (`grep`, `sed`, `awk`, `ip`, `plink`, `sshpass`), которых нет в Windows PATH.

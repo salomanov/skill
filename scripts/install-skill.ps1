@@ -5,6 +5,9 @@
 )
 
 $ErrorActionPreference = "Stop"
+$env:PYTHONIOENCODING = "utf-8"
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
 
 Write-Host "=== [Project Guardian] Установка скилла '$SkillName' ===" -ForegroundColor Cyan
 Write-Host "Источник: github.com/sickn33/agentic-awesome-skills"
