@@ -147,6 +147,19 @@ description: >-
 & "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\checkpoint.ps1" -Message "Новый функционал" -Verify
 ```
 
+### 5.6 📝 Безопасный генератор scratch-скриптов (`new-scratch.ps1`)
+Создает изолированный скрипт в `scratch/` с принудительной кодировкой UTF-8, защитой от краха CP1251 и автоматическим считыванием реальных учетных данных (SSH, порты, токены) из проекта:
+```powershell
+# Создание чистого Python scratch-скрипта с защитой UTF-8:
+& "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\new-scratch.ps1" -Name "test_logic"
+
+# Создание готового скрипта с Paramiko SSH (считывает хост и пароль из deploy.py/.env):
+& "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\new-scratch.ps1" -Name "check_router" -WithSSH
+
+# Создание безопасного PowerShell scratch-скрипта (UTF-8 с BOM):
+& "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\new-scratch.ps1" -Name "check_env" -Type PowerShell
+```
+
 ---
 
 ## 6. Автономный подбор специализированных скиллов
@@ -336,6 +349,12 @@ description: >-
 * **Железное правило:**
   - При запуске тестов ВСЕГДА явно указывать целевой каталог конкретного проекта (например `unittest.TestLoader().discover(start_dir="Opds", pattern="test_*.py")` или `pytest "Opds/tests"`).
   - Запрещен неявный запуск `discover()` в корне составного воркспейса.
+
+### 8. Запрет циклического поллинга фоновых задач Delegator
+* **Причина сбоев:** При уходе длительной задачи `ai-delegate.cmd assist` в фон агент впадает в панику, создает бесконечные циклы с вызовом `scratch/sleep.py` и десятками запросов `manage_task(Action: 'status')`, перегружая платформу и приводя к зависанию и аварийному перезапуску сессии.
+* **Железное правило:**
+  - При получении `Task id: ...` от Delegator агент отправляет пользователю 1 короткое информативное предложение (*«Запустил Delegator, ожидаю...»*) и **НЕМЕДЛЕННО ЗАВЕРШАЕТ ХОД**.
+  - Никаких вызовов `sleep.py` и ручных опросов статуса: платформа возобновит выполнение агента автоматически через Reactive Wakeup.
 
 ---
 

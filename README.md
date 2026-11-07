@@ -47,6 +47,7 @@
 │   ├── security-gate.ps1             # Исполняемый гейт: секреты, антипаттерны, синтаксис (exit 1)
 │   ├── record-failure.ps1            # Фиксация инцидентов в docs/ERRORS_AND_FAILURES.md
 │   ├── rollback.ps1                  # Менеджер отката с просмотром точек (-List)
+│   ├── new-scratch.ps1               # Безопасный генератор scratch-скриптов (UTF-8, авто-подтягивание SSH/API кредов)
 │   └── install-skill.ps1             # Автономный загрузчик скиллов из GitHub
 ├── references/
 │   └── PROJECT_STATE_TEMPLATE.md     # Универсальный шаблон памяти проекта

@@ -39,6 +39,7 @@
 │   ├── security-gate.ps1             # Исполняемый гейт: секреты, антипаттерны, синтаксис Python/Node/Bash/PS1 (exit 1)
 │   ├── record-failure.ps1            # Фиксация инцидентов в docs/ERRORS_AND_FAILURES.md (-SubProject, автоопределение)
 │   ├── rollback.ps1                  # Менеджер отката с просмотром точек (-List) и детекцией новых файлов
+│   ├── new-scratch.ps1               # Безопасный генератор scratch-скриптов (UTF-8, авто-подтягивание SSH/API кредов)
 │   └── install-skill.ps1             # Автономный загрузчик скиллов из GitHub (с токеном и $HOME)
 ├── references/
 │   └── PROJECT_STATE_TEMPLATE.md     # Универсальный шаблон памяти проекта
@@ -81,6 +82,10 @@
   - В `SKILL.md` (10.6, 10.7) и глобальные правила `AGENTS.md` внедрены правила «Read Credentials & Config First» и «Targeted Test Discovery».
   - В `checkpoint.ps1`, `record-failure.ps1` и `prepare-handoff.ps1` добавлена защита от неэкранированных пробелов в аргументах (`ValueFromRemainingArguments` + авто-склейка строк).
   - Скрипты сохранены с UTF-8 BOM, пройден гейт безопасности.
+- [x] **v1.7.0**: Executable Barriers & Stability Suite:
+  - Создан генератор `scripts/new-scratch.ps1` с автоподстановкой UTF-8 и параметров SSH/API из проекта.
+  - В `AGENTS.md` и `SKILL.md` внедрен жесткий запрет циклического поллинга Delegator (`No-Polling & Reactive Stop`).
+  - В Rule 0 зафиксирован норматив контекстной гигиены: при 150–200 шагах обязательна передача контекста через `prepare-handoff.ps1`.
 
 ## 4a. Известные исправления (Regressions — не сломать повторно)
 1. Раздел 8/9 не должен снова разрешать «пароль по умолчанию» — именно эта формулировка легализовала бэкдор.
@@ -95,8 +100,20 @@
 10. Запрещено угадывать учетные данные (логины, пароли, порты) при создании scratch-скриптов; параметры обязаны предварительно считываться из конфигураций и `deploy.py`.
 11. Запрещен неявный запуск unittest/pytest `discover()` в корне составного воркспейса во избежание исполнения внутренних тестов пакетов из `site-packages`.
 12. Параметры сообщений в скриптах (`-Message`, `-Title`, `-NextGoal`) обязаны поддерживать неэкранированные пробелы и несколько позиционных аргументов (`ValueFromRemainingArguments`) во избежание сбоев парсера PowerShell.
+13. Запрещен циклический поллинг задач Delegator (`manage_task`/`sleep.py`) при уходе в фон: агент обязан отправить одно сообщение и завершить ход.
+14. Для создания scratch-скриптов использовать генератор `new-scratch.ps1`, исключающий пропуск `sys.stdout.reconfigure` и кредов.
+15. При достижении диалогом 150–200 шагов обязательна передача контекста через `prepare-handoff.ps1` во избежание когнитивной деградации.
 
 ## 5. История Изменений (Журнал сессий)
+
+- 🛡️ **Чекпоинт** [2026-11-07 13:46:22] (метка: 2026-11-07_13-46-22): feat: v1.7.0 Executable Barriers Suite with new-scratch generator and No-Polling Delegator rule
+
+### [2026-11-07 13:45]
+- **Что сделано**: Анализ сбоя диалога `6dff03e2` и внедрение комплекса Executable Barriers (v1.7.0):
+  1. **Скрипт `scripts/new-scratch.ps1`**: Разработан безопасный генератор scratch-скриптов для Python и PowerShell. Автоматически гарантирует `sys.stdout.reconfigure(encoding='utf-8')` и UTF-8 BOM, а при флаге `-WithSSH` парсит проект на наличие боевых параметров (`host`, `port`, `user`, `password` из `deploy.py` / `.env`), исключая ошибки `SSHException` и крах `CP1251`.
+  2. **Запрет поллинга Delegator**: В глобальные правила `~/.gemini/config/AGENTS.md` и `SKILL.md` (раздел 10.8) внедрено жесткое правило: при уходе Delegator в фон агент отправляет пользователю 1 сообщение и немедленно останавливает ход, дожидаясь `Reactive Wakeup`. Любые циклы с `manage_task status` и `sleep.py` категорически запрещены.
+  3. **Контекстная гигиена**: В Rule 0 зафиксирован норматив передачи сессии при приближении к 150–200 шагам через `prepare-handoff.ps1`.
+- **Чекпоинт**: Релиз v1.7.0 (Executable Barriers & Stability Suite).
 
 - 🛡️ **Чекпоинт** [2026-11-06 03:28:14] (метка: 2026-11-06_03-28-14): feat: resolve second batch of AGENT_RECOMMENDATIONS for credentials and test discovery
 
