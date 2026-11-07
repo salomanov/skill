@@ -175,7 +175,7 @@ foreach ($name in $files) {
     }
 
     $full = Join-Path $scanDir $name
-    if (-not (Test-Path $full -PathType Leaf)) { continue }
+    if (-not (Test-Path -LiteralPath $full -PathType Leaf)) { continue }
     try {
         if ((Get-Item $full).Length -gt 1MB) { continue }
         $content = [System.IO.File]::ReadAllText($full, [System.Text.Encoding]::UTF8)
@@ -220,7 +220,7 @@ if (-not $SkipSyntax) {
 
     foreach ($name in $files) {
         $full = Join-Path $scanDir $name
-        if (-not (Test-Path $full -PathType Leaf)) { continue }
+        if (-not (Test-Path -LiteralPath $full -PathType Leaf)) { continue }
         $ext = [System.IO.Path]::GetExtension($name).ToLowerInvariant()
 
         if ($ext -eq '.py' -and $python) {
@@ -263,7 +263,7 @@ if ($CheckLinks) {
     foreach ($name in $files) {
         if ($name -notmatch '\.(md|sh|py)$') { continue }
         $full = Join-Path $scanDir $name
-        if (-not (Test-Path $full)) { continue }
+        if (-not (Test-Path -LiteralPath $full)) { continue }
         $text = [System.IO.File]::ReadAllText($full, [System.Text.Encoding]::UTF8)
         $urls = [regex]::Matches($text, 'https?://[^\s"''<>)]+') |
             ForEach-Object { $_.Value } | Sort-Object -Unique

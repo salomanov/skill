@@ -135,6 +135,11 @@ def main():
                 print(out.strip())
             if err:
                 print("STDERR:", err.strip())
+
+            # Примечание для Dropbear (Keenetic/OpenWrt): подсистема SFTP не установлена,
+            # вызов open_sftp() падает с EOF. Передача файлов делается через exec_command:
+            # stdin, stdout, stderr = ssh.exec_command("cat > /opt/etc/test.sh && chmod 755 /opt/etc/test.sh")
+            # stdin.write(b"#!/bin/sh\necho ok\n"); stdin.close()
     except Exception as e:
         print(f"[ERROR] Ошибка SSH-соединения: {e}")
         sys.exit(1)

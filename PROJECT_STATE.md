@@ -86,6 +86,10 @@
   - Создан генератор `scripts/new-scratch.ps1` с автоподстановкой UTF-8 и параметров SSH/API из проекта.
   - В `AGENTS.md` и `SKILL.md` внедрен жесткий запрет циклического поллинга Delegator (`No-Polling & Reactive Stop`).
   - В Rule 0 зафиксирован норматив контекстной гигиены: при 150–200 шагах обязательна передача контекста через `prepare-handoff.ps1`.
+- [x] **v1.7.1**: Рекомендации AGENT_RECOMMENDATIONS (WildcardPatternException Fix & Windows CRLF):
+  - В `security-gate.ps1` вызовы `Test-Path` переведены на `-LiteralPath` для исключения краха `WildcardPatternException` на файлах с квадратными скобками (`log (2).txt`, `[id].tsx`).
+  - В `new-scratch.ps1` добавлена подсказка-напоминание по работе с Dropbear SSH (запрет `open_sftp()`, передача через `cat > path`).
+  - В `SKILL.md` (разделы 10.9, 10.10) и `AGENTS.md` добавлены правила по Windows CRLF vs LF для `edit_file` и безопасному использованию `-LiteralPath`.
 
 ## 4a. Известные исправления (Regressions — не сломать повторно)
 1. Раздел 8/9 не должен снова разрешать «пароль по умолчанию» — именно эта формулировка легализовала бэкдор.
@@ -103,8 +107,19 @@
 13. Запрещен циклический поллинг задач Delegator (`manage_task`/`sleep.py`) при уходе в фон: агент обязан отправить одно сообщение и завершить ход.
 14. Для создания scratch-скриптов использовать генератор `new-scratch.ps1`, исключающий пропуск `sys.stdout.reconfigure` и кредов.
 15. При достижении диалогом 150–200 шагов обязательна передача контекста через `prepare-handoff.ps1` во избежание когнитивной деградации.
+16. В вызовах `Test-Path` на файлах проекта обязательно использовать `-LiteralPath` во избежание краха `WildcardPatternException` на путях с квадратными скобками (`[id]`, `log (2).txt`).
 
 ## 5. История Изменений (Журнал сессий)
+
+- 🛡️ **Чекпоинт** [2026-11-07 14:02:03] (метка: 2026-11-07_14-02-03): feat: v1.7.1 WildcardPatternException LiteralPath fix and Windows CRLF hardening
+
+### [2026-11-07 14:00]
+- **Что сделано**: Анализ и внедрение новой порции рекомендаций из `AGENT_RECOMMENDATIONS.md` (сессия диагностики `Router_Workspace`):
+  1. **Фикс `WildcardPatternException`**: В `security-gate.ps1` вызовы проверки файлов переведены с `-Path` на `-LiteralPath` (строки 178, 223, 266), предотвращая аварийные сбои PowerShell при наличии квадратных скобок в путях к файлам.
+  2. **Dropbear SSH & SFTP Reminder**: В генератор `new-scratch.ps1` добавлена подсказка о невозможности использования `open_sftp()` на роутерах с Dropbear и пример надежной передачи файлов через `exec_command("cat > path")`.
+  3. **Windows CRLF vs LF для `edit_file`**: В `SKILL.md` (раздел 10.9) и `AGENTS.md` добавлено железное правило действий при ошибке `target content not found`.
+  4. Проверена безопасность через `security-gate.ps1` и очищен файл `AGENT_RECOMMENDATIONS.md`.
+- **Чекпоинт**: Релиз v1.7.1 (WildcardPatternException Fix & Windows CRLF Hardening).
 
 - 🛡️ **Чекпоинт** [2026-11-07 13:46:22] (метка: 2026-11-07_13-46-22): feat: v1.7.0 Executable Barriers Suite with new-scratch generator and No-Polling Delegator rule
 
