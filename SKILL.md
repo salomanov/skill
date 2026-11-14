@@ -187,6 +187,19 @@ description: >-
      *«Для используемого инструмента <Имя> доступно обновление (vX.X -> vY.Y). Предлагаю обновить перед выполнением задачи: `uv pip install -U <пакет>`. Обновляем?»*
    - Не обновлять молча мажорные версии с риском breaking changes — всегда информировать пользователя.
 
+4. **Мониторинг появления НОВЫХ скиллов в каталоге (`check-new-skills.ps1`)**:
+   Для отслеживания новинок в каталоге `sickn33/agentic-awesome-skills` используется скрипт инспекции релизов и changelog:
+   ```powershell
+   # Посмотреть новые скиллы за последние 4 релиза:
+   & "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\check-new-skills.ps1"
+
+   # Показать только ещё не установленные скиллы:
+   & "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\check-new-skills.ps1" -OnlyUninstalled
+
+   # Поиск новинок по ключевому слову (например: refactoring, firmware, ocr, scraping):
+   & "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\check-new-skills.ps1" -Filter "refactoring"
+   ```
+
 ---
 
 ## 7. Архитектурный анализ через `graphify`
