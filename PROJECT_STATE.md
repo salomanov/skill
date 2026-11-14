@@ -111,6 +111,20 @@
 
 ## 5. История Изменений
 
+- 🛡️ **Чекпоинт** [2026-11-14 11:55:10] (метка: 2026-11-14_11-55-10): docs: classify upstream vs custom skills and update ponytail + rea (v1.7.6)
+
+### [2026-11-14 11:55]
+- **Что сделано**: Уточнена классификация скиллов и обновлены upstream-скиллы Ponytail и REA (v1.7.6):
+  1. Разделены контуры скиллов:
+     - **Кастомные авторские скиллы пользователя** (не перезаписываются): `project-guardian`, `router-ops`, `scan-to-epub-pro`.
+     - **Внешние upstream-скиллы**: `ponytail`, `ponytail-review`, `ponytail-audit` (из репозитория `DietrichGebert/ponytail`), `rea` (из `morluto/rea`), а также каталог `sickn33/agentic-awesome-skills`.
+  2. Обновлены до актуальных upstream-релизов:
+     - `ponytail` (SKILL.md обновлен из `DietrichGebert/ponytail`)
+     - `ponytail-review` (обновлен из `DietrichGebert/ponytail`)
+     - `ponytail-audit` (обновлен из `DietrichGebert/ponytail`)
+     - `rea` (синхронизирован с установленным CLI `rea v6.8.0`)
+- **Чекпоинт**: Релиз v1.7.6 (Upstream Taxonomy & Ponytail/REA Refresh).
+
 - 🛡️ **Чекпоинт** [2026-11-14 11:48:23] (метка: 2026-11-14_11-48-23): perf: optimize timeout and update core skills batch (v1.7.5)
 
 - 🛡️ **Чекпоинт** [2026-11-14 10:50:23] (метка: 2026-11-14_10-50-23): feat: add check-new-skills tool and update core packages to latest (v1.7.4)
