@@ -111,6 +111,8 @@
 
 ## 5. История Изменений
 
+- 🛡️ **Чекпоинт** [2026-11-14 11:48:23] (метка: 2026-11-14_11-48-23): perf: optimize timeout and update core skills batch (v1.7.5)
+
 - 🛡️ **Чекпоинт** [2026-11-14 10:50:23] (метка: 2026-11-14_10-50-23): feat: add check-new-skills tool and update core packages to latest (v1.7.4)
 
 ### [2026-11-14 10:50]

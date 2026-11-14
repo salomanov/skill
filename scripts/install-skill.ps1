@@ -43,7 +43,7 @@ function Download-GitHubDirectory {
     }
 
     try {
-        $response = Invoke-RestMethod -Uri $apiUrl -Headers $headers -TimeoutSec 15
+        $response = Invoke-RestMethod -Uri $apiUrl -Headers $headers -TimeoutSec 5
         foreach ($item in $response) {
             $destFile = Join-Path $LocalPath $item.name
             if ($item.type -eq "file") {
