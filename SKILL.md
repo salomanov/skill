@@ -162,17 +162,30 @@ description: >-
 
 ---
 
-## 6. Автономный подбор специализированных скиллов
+## 6. Автономный подбор, проверка свежести и обновление скиллов (Skill & Tool Freshness Policy)
 
-В зависимости от того, что мы разрабатываем, агент сам подтягивает специализированные навыки из каталога [sickn33/agentic-awesome-skills](https://github.com/sickn33/agentic-awesome-skills):
-- **Для сайтов**: `react-ui-patterns`, `tailwind-patterns`, `fastapi-expert`, `seo-optimization`, `web-performance`.
-- **Для ПК программ**: `pyqt6-desktop-dev`, `pyinstaller-windows-packager`, `csharp-dotnet`.
-- **Для прошивок**: `arm-cortex-expert`, `firmware-analyst`, `hardware-security`.
+В зависимости от задачи агент самостоятельно управляет скиллами и ключевыми инструментами:
+1. **Первичная установка отсутствующего скилла**:
+   Если в `~/.gemini/config/skills` нет нужного профильного скилла, агент скачивает его из каталога [sickn33/agentic-awesome-skills](https://github.com/sickn33/agentic-awesome-skills):
+   ```powershell
+   & "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\install-skill.ps1" -SkillName "<имя-скилла>"
+   ```
 
-Команда установки:
-```powershell
-& "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\install-skill.ps1" -SkillName "<имя-скилла>"
-```
+2. **Проверка свежести и обновление уже установленных скиллов (-CheckOnly / -Update)**:
+   При первом обращении к профильному скиллу в рамках задачи агент не должен работать по устаревшим инструкциям. Для проверки и обновления используется:
+   ```powershell
+   # Проверить наличие обновлений без перезаписи:
+   & "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\install-skill.ps1" -SkillName "<имя-скилла>" -CheckOnly
+
+   # Принудительно обновить скилл до актуального релиза upstream:
+   & "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\install-skill.ps1" -SkillName "<имя-скилла>" -Update
+   ```
+
+3. **Проактивная проверка рабочих инструментов (Graphify, TinyTuya, Playwright, PlatformIO)**:
+   - Если задача активно использует внешние утилиты и библиотеки (например, `graphifyy`, `tinytuya`, `playwright`), агент перед началом активной работы выполняет быструю проверку версии (`uv pip list --outdated <пакет>` или `git status`).
+   - При обнаружении нового стабильного релиза агент **ОБЯЗАН проактивно уведомить пользователя**:
+     *«Для используемого инструмента <Имя> доступно обновление (vX.X -> vY.Y). Предлагаю обновить перед выполнением задачи: `uv pip install -U <пакет>`. Обновляем?»*
+   - Не обновлять молча мажорные версии с риском breaking changes — всегда информировать пользователя.
 
 ---
 
