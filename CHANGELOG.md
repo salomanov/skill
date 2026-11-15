@@ -2,6 +2,18 @@
 
 All notable changes to Project Guardian are documented in this file.
 
+## v1.7.10 - 2026-11-15
+
+### Fixed
+- **Targeted Session Step Counter & False Alert Prevention**:
+  - Устранено ложное срабатывание счетчика шагов: вместо слепого перебора директорий `brain` по `LastWriteTime`, определение текущей сессии переведено на нативную переменную `$env:ANTIGRAVITY_CONVERSATION_ID` и параметр `-ConversationId`.
+  - Новый диалог (например, `0d7841b1`) больше никогда не перехватит 2000+ шагов из предыдущего закрытого диалога (`236ded68`).
+
+### Changed
+- `PROJECT_STATE.md` обновлен до версии 1.7.10.
+
+---
+
 ## v1.7.9 - 2026-11-15
 
 ### Added

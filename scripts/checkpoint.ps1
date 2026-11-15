@@ -11,6 +11,7 @@
     [string]$ProjectPath = (Get-Location).Path,
     [string]$SubProject = "",    # Явное указание подпроекта в составном воркспейсе / монорепозитории
     [switch]$IncludeSubprojects = $false, # При бэкапе корня воркспейса включать вложенные проекты
+    [string]$ConversationId = "",         # Явный ID диалога (по умолчанию берется из $env:ANTIGRAVITY_CONVERSATION_ID)
     [Parameter(ValueFromRemainingArguments=$true)]
     [string[]]$ExtraArgs
 )
@@ -31,23 +32,51 @@ if ([string]::IsNullOrWhiteSpace($Message)) {
     $Message = "Automatic checkpoint"
 }
 
-# --- Mechanical Step Counter & Context Hygiene Guard (Project Guardian v1.7.9) ---
+# --- Mechanical Step Counter & Context Hygiene Guard (Project Guardian v1.7.10) ---
 function Get-ActiveSessionStepCount {
     [CmdletBinding()]
-    param()
+    param(
+        [string]$TargetConversationId = "",
+        [int]$Threshold = 180
+    )
+
+    $resolvedId = $TargetConversationId
+    if (-not $resolvedId) {
+        foreach ($varName in @('ANTIGRAVITY_CONVERSATION_ID', 'GEMINI_CONVERSATION_ID', 'CONVERSATION_ID')) {
+            $val = [Environment]::GetEnvironmentVariable($varName)
+            if ($val) {
+                $resolvedId = $val.Trim()
+                break
+            }
+        }
+    }
 
     $brainRoot = Join-Path $HOME '.gemini/antigravity/brain'
-    $threshold = 180
 
-    if (-not (Test-Path -LiteralPath $brainRoot -PathType Container)) { return 0 }
+    # Если ID не определен через env или параметр, проверяем свежие файлы (не директории!) за последние 60 сек
+    if (-not $resolvedId) {
+        if (Test-Path -LiteralPath $brainRoot -PathType Container) {
+            $cutoff = (Get-Date).AddSeconds(-60)
+            $freshSession = Get-ChildItem -LiteralPath $brainRoot -Directory -ErrorAction SilentlyContinue |
+                ForEach-Object {
+                    $tPath = Join-Path $_.FullName '.system_generated/logs/transcript.jsonl'
+                    if (Test-Path -LiteralPath $tPath -PathType Leaf) {
+                        $fi = Get-Item -LiteralPath $tPath
+                        if ($fi.LastWriteTime -ge $cutoff) {
+                            [pscustomobject]@{ Id = $_.Name; LastWriteTime = $fi.LastWriteTime }
+                        }
+                    }
+                } | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 
-    $activeDir = Get-ChildItem -LiteralPath $brainRoot -Directory -Force -ErrorAction SilentlyContinue |
-                 Sort-Object -Property LastWriteTime -Descending |
-                 Select-Object -First 1
+            if ($freshSession) {
+                $resolvedId = $freshSession.Id
+            }
+        }
+    }
 
-    if ($null -eq $activeDir) { return 0 }
+    if (-not $resolvedId) { return 0 }
 
-    $transcript = Join-Path $activeDir.FullName '.system_generated/logs/transcript.jsonl'
+    $transcript = Join-Path (Join-Path $brainRoot $resolvedId) '.system_generated/logs/transcript.jsonl'
     if (-not (Test-Path -LiteralPath $transcript -PathType Leaf)) { return 0 }
 
     $stepCount = 0
@@ -59,7 +88,7 @@ function Get-ActiveSessionStepCount {
     catch { return 0 }
     finally { if ($null -ne $reader) { $reader.Dispose() } }
 
-    if ($stepCount -ge $threshold) {
+    if ($stepCount -ge $Threshold) {
         $w = 78
         $border = '#' * $w
         $row = '#   {0,-72} #'
@@ -69,8 +98,8 @@ function Get-ActiveSessionStepCount {
         Write-Host ($row -f '') -ForegroundColor Red
         Write-Host ($row -f '!!! MECHANICAL STEP COUNTER :: CONTEXT HYGIENE GUARD !!!') -ForegroundColor Red
         Write-Host ($row -f '') -ForegroundColor Red
-        Write-Host ($row -f "Сессия: $($activeDir.Name)") -ForegroundColor Red
-        Write-Host ($row -f "Шагов в логе: $stepCount (порог перегрузки >= $threshold)") -ForegroundColor Red
+        Write-Host ($row -f "Сессия: $resolvedId") -ForegroundColor Red
+        Write-Host ($row -f "Шагов в логе: $stepCount (порог перегрузки >= $Threshold)") -ForegroundColor Red
         Write-Host ($row -f '') -ForegroundColor Red
         Write-Host ($row -f '>>> ВНИМАНИЕ: СРОЧНО ЗАПУСТИТЬ prepare-handoff.ps1 И СМЕНИТЬ ДИАЛОГ! <<<') -ForegroundColor Red
         Write-Host ($row -f 'Во избежание когнитивной деградации агента продолжите работу в новом чате.') -ForegroundColor Red
@@ -82,7 +111,7 @@ function Get-ActiveSessionStepCount {
     return $stepCount
 }
 
-$activeSteps = Get-ActiveSessionStepCount
+$activeSteps = Get-ActiveSessionStepCount -TargetConversationId $ConversationId
 
 # 0. Нормализация пути и автоопределение подпроекта в составных воркспейсах
 if ($ProjectPath -and (Test-Path $ProjectPath)) {
