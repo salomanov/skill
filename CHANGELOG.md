@@ -2,6 +2,22 @@
 
 All notable changes to Project Guardian are documented in this file.
 
+## v1.7.8 - 2026-11-15
+
+### Added
+- **Android, Mobile & Path Invariants Suite (Раздел 17 в SKILL.md)**:
+  - Проверка `PATH-001` в `scripts/security-gate.ps1`: автоматический запрет кириллицы, не-ASCII символов и пробелов в путях для проектов Android, Java, Kotlin, C/C++ и PyInstaller.
+  - Регламент мобильной разработки: категорический запрет слепой отладки без живого `adb logcat`.
+  - Защита Java SPI: обязательное сохранение каталога `META-INF/services/` при сборке/модификации APK (предотвращение падений Paho MQTT / `NetworkModuleService`).
+  - Протокол UI: обязательная фиксация экрана через `adb shell screencap` и `uiautomator dump` до обсуждения и правок интерфейса.
+  - Чеклист по `SecurityException`: оперативное устранение ошибки прав `adb shell input tap` через включение «Отладка по USB (Настройки безопасности)» в настройках Android.
+- База ошибок: создан `docs/ERRORS_AND_FAILURES.md` с фиксацией инцидента Paho MQTT и кириллических путей.
+
+### Changed
+- `PROJECT_STATE.md` обновлен до версии 1.7.8 и статуса `Mobile & Path Invariants Enforced`.
+
+---
+
 ## v1.7.7 - 2026-11-15
 
 ### Added
