@@ -3,8 +3,8 @@
 > Данный файл автоматически ведется агентом и служит долговременной памятью проекта.
 > При начале новой сессии агент считывает этот файл в первую очередь.
 
-- **Версия**: `v1.7.8` (Android, Mobile & Path Invariants Suite)
-- **Статус**: Активен, Mobile & Path Invariants Enforced
+- **Версия**: `v1.7.9` (Mechanical Step Counter & Context Hygiene Guard)
+- **Статус**: Активен, Mechanical Step Counter Enforced
 - **Дата обновления**: 2026-11-15
 
 
@@ -116,6 +116,8 @@
 
 ## 5. История Изменений
 
+- 🛡️ **Чекпоинт** [2026-11-15 22:52:44] (метка: 2026-11-15_22-52-44): v1.7.9 Mechanical Step Counter & Context Hygiene Guard
+
 - 🛡️ **Чекпоинт** [2026-11-15 22:48:29] (метка: 2026-11-15_22-48-29): Pre-v1.7.9 Mechanical Step Counter
 
 - 🛡️ **Чекпоинт** [2026-11-15 20:48:11] (метка: 2026-11-15_20-48-11): v1.7.8 Android Mobile & Path Invariants Suite
@@ -217,6 +219,14 @@
 - **Чекпоинт**: Релиз v1.6.2 (Windows CLI UTF-8 Encoding & Firmware Checkpoint Separation).
 
 - 🛡️ **Чекпоинт** [2026-11-04 18:00:39] (метка: 2026-11-04_18-00-39): feat: record-failure subproject auto-detection and isolation
+### [2026-11-15 22:50]
+- **Что сделано**: Внедрен модуль аппаратного контроля длины сессии и контекстной гигиены (Релиз v1.7.9):
+  1. `scripts/checkpoint.ps1` и `scripts/security-gate.ps1`: внедрена функция `Get-ActiveSessionStepCount` — сверхбыстрый (160 мс) потоковый подсчет шагов активной сессии через `[System.IO.StreamReader]` без рекурсии.
+  2. Добавлен красный тревожный баннер-стоппер при $\ge 180$ шагах, принудительно требующий запуска `prepare-handoff.ps1` и перехода в новый диалог.
+  3. `SKILL.md`: добавлен Раздел 18 «Механический контроль контекстной гигиены».
+  4. `CHANGELOG.md`: зафиксирован релиз v1.7.9.
+- **Чекпоинт**: Релиз v1.7.9 (Mechanical Step Counter & Context Hygiene Guard).
+
 ### [2026-11-15 20:45]
 - **Что сделано**: Внедрен комплекс стандартов мобильной разработки и инвариантов путей (Релиз v1.7.8):
   1. `scripts/security-gate.ps1`: внедрена проверка `PATH-001` (запрет кириллицы, не-ASCII символов и пробелов в путях для Android SDK, Gradle, Java, C/C++ и PyInstaller проектов).

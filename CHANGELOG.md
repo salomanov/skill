@@ -2,6 +2,19 @@
 
 All notable changes to Project Guardian are documented in this file.
 
+## v1.7.9 - 2026-11-15
+
+### Added
+- **Mechanical Step Counter & Context Hygiene Guard (Раздел 18 в SKILL.md)**:
+  - Функция `Get-ActiveSessionStepCount` в `scripts/checkpoint.ps1` и `scripts/security-gate.ps1`: быстрый потоковый подсчет шагов активной сессии через `[System.IO.StreamReader]`.
+  - Красный стоп-баннер при $\ge 180$ шагах с принудительным требованием запуска `prepare-handoff.ps1` и перехода в новый диалог.
+  - Аппаратная защита от когнитивной деградации моделей на сверхдлинных сессиях.
+
+### Changed
+- `PROJECT_STATE.md` обновлен до версии 1.7.9 и статуса `Mechanical Step Counter Enforced`.
+
+---
+
 ## v1.7.8 - 2026-11-15
 
 ### Added

@@ -31,6 +31,59 @@ if ([string]::IsNullOrWhiteSpace($Message)) {
     $Message = "Automatic checkpoint"
 }
 
+# --- Mechanical Step Counter & Context Hygiene Guard (Project Guardian v1.7.9) ---
+function Get-ActiveSessionStepCount {
+    [CmdletBinding()]
+    param()
+
+    $brainRoot = Join-Path $HOME '.gemini/antigravity/brain'
+    $threshold = 180
+
+    if (-not (Test-Path -LiteralPath $brainRoot -PathType Container)) { return 0 }
+
+    $activeDir = Get-ChildItem -LiteralPath $brainRoot -Directory -Force -ErrorAction SilentlyContinue |
+                 Sort-Object -Property LastWriteTime -Descending |
+                 Select-Object -First 1
+
+    if ($null -eq $activeDir) { return 0 }
+
+    $transcript = Join-Path $activeDir.FullName '.system_generated/logs/transcript.jsonl'
+    if (-not (Test-Path -LiteralPath $transcript -PathType Leaf)) { return 0 }
+
+    $stepCount = 0
+    $reader = $null
+    try {
+        $reader = [System.IO.StreamReader]::new($transcript)
+        while ($null -ne $reader.ReadLine()) { $stepCount++ }
+    }
+    catch { return 0 }
+    finally { if ($null -ne $reader) { $reader.Dispose() } }
+
+    if ($stepCount -ge $threshold) {
+        $w = 78
+        $border = '#' * $w
+        $row = '#   {0,-72} #'
+
+        Write-Host ''
+        Write-Host $border -ForegroundColor Red
+        Write-Host ($row -f '') -ForegroundColor Red
+        Write-Host ($row -f '!!! MECHANICAL STEP COUNTER :: CONTEXT HYGIENE GUARD !!!') -ForegroundColor Red
+        Write-Host ($row -f '') -ForegroundColor Red
+        Write-Host ($row -f "Сессия: $($activeDir.Name)") -ForegroundColor Red
+        Write-Host ($row -f "Шагов в логе: $stepCount (порог перегрузки >= $threshold)") -ForegroundColor Red
+        Write-Host ($row -f '') -ForegroundColor Red
+        Write-Host ($row -f '>>> ВНИМАНИЕ: СРОЧНО ЗАПУСТИТЬ prepare-handoff.ps1 И СМЕНИТЬ ДИАЛОГ! <<<') -ForegroundColor Red
+        Write-Host ($row -f 'Во избежание когнитивной деградации агента продолжите работу в новом чате.') -ForegroundColor Red
+        Write-Host ($row -f '') -ForegroundColor Red
+        Write-Host $border -ForegroundColor Red
+        Write-Host ''
+    }
+
+    return $stepCount
+}
+
+$activeSteps = Get-ActiveSessionStepCount
+
 # 0. Нормализация пути и автоопределение подпроекта в составных воркспейсах
 if ($ProjectPath -and (Test-Path $ProjectPath)) {
     $ProjectPath = (Resolve-Path $ProjectPath).Path
