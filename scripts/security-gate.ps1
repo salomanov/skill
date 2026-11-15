@@ -278,6 +278,36 @@ if ($CheckLinks) {
     }
 }
 
+# --- PATH-001: Mobile, C/C++, Java & PyInstaller Path Invariants -------
+$pathFailures = @()
+$exactTriggerNames = @('AndroidManifest.xml', 'apktool.yml', 'build.gradle', 'build.gradle.kts', 'CMakeLists.txt')
+$triggerExts = @('.java', '.kt', '.kts', '.gradle', '.c', '.cc', '.cpp', '.cxx', '.h', '.hpp', '.spec')
+
+$hasMobileOrNativeTriggers = $false
+foreach ($f in $files) {
+    $baseName = Split-Path $f -Leaf
+    $ext = [System.IO.Path]::GetExtension($f).ToLowerInvariant()
+    if ($exactTriggerNames -contains $baseName -or $triggerExts -contains $ext) {
+        $hasMobileOrNativeTriggers = $true
+        break
+    }
+}
+
+if ($hasMobileOrNativeTriggers) {
+    $fullScanDir = [System.IO.Path]::GetFullPath($scanDir)
+    $hasNonAscii = [regex]::IsMatch($fullScanDir, '[^\x00-\x7F]')
+    $hasCyrillic = [regex]::IsMatch($fullScanDir, '[\u0400-\u04FF\u0500-\u052F\u2DE0-\u2DFF\uA640-\uA69F]')
+    $hasSpaces = [regex]::IsMatch($fullScanDir, '\s')
+    
+    if ($hasNonAscii -or $hasSpaces) {
+        $reason = @()
+        if ($hasCyrillic) { $reason += 'кириллица' }
+        elseif ($hasNonAscii) { $reason += 'не-ASCII' }
+        if ($hasSpaces) { $reason += 'пробелы' }
+        $pathFailures += "PATH-001: путь '$fullScanDir' содержит $($reason -join ' + '). Android/apktool/aapt2/Gradle/C++/PyInstaller ломаются на таких путях. Перенесите проект в чистый ASCII-путь без пробелов."
+    }
+}
+
 # --- Report -------------------------------------------------------------
 
 Write-Host ""
@@ -298,8 +328,9 @@ foreach ($f in $findings) {
 }
 foreach ($s in $syntaxFailures) { Write-Host "  [FAIL] SYNTAX $s" -ForegroundColor Red }
 foreach ($l in $linkFailures)   { Write-Host "  [FAIL] LINK   $l" -ForegroundColor Red }
+foreach ($p in $pathFailures)   { Write-Host "  [FAIL] $p" -ForegroundColor Red }
 
-$total = $findings.Count + $syntaxFailures.Count + $linkFailures.Count
+$total = $findings.Count + $syntaxFailures.Count + $linkFailures.Count + $pathFailures.Count
 if ($total -gt 0) {
     Write-Host ""
     Write-Host "SECURITY GATE FAILED: $total problem(s)." -ForegroundColor Red

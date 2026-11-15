@@ -562,3 +562,44 @@ TDD обязателен для любых изменений, затрагив�
 2. Фактический консольный вывод терминала с результатом `PASSED` и `exit code 0`.
 3. Если задача не попадает в список исключений и не содержит подтверждения прогона тестов — задача считается незавершенной (`Verification Before Completion`).
 
+---
+
+## 17. Регламент мобильной разработки и реверс-инжиниринга APK (Android & Mobile Suite v1.7.8)
+
+Правила действуют для любых Android-проектов (Java, Kotlin, Cordova, Capacitor, React Native), а также при модификации и реверс-инжиниринге APK (`apktool`, `jadx`, `rea`).
+
+### 17.1. Запрет «слепого» тестирования (No Blind Testing)
+- **Категорический запрет**: Запрещено отправлять пользователю модифицированные сборки APK и гадать о причинах сбоя без снятия живого лога `adb logcat`.
+- При возникновении краша («Приложение остановлено») агент обязан:
+  1. Немедленно запросить или подключить сетевую отладку: `adb connect <ip>:<port>`.
+  2. Запустить целевой лог: `adb logcat -d -v threadtime > scratch/crash.log`.
+  3. Найти точный Java-стектрейс (`FATAL EXCEPTION`, `AndroidRuntime`, `Caused by:`).
+  4. Только после локализации точной строки исключения приступать к исправлению.
+
+### 17.2. Неприкосновенность Java SPI (`META-INF/services/`)
+- При распаковке, декомпиляции (`apktool d`) и повторной сборке (`apktool b` / ZIP-инъекции) **СТРОГО ЗАПРЕЩЕНО** удалять, игнорировать или исключать каталог `META-INF/services/`.
+- **Причина**: Популярные библиотеки (Eclipse Paho MQTT, OkHttp, Jackson, gRPC) используют Java ServiceLoader для динамической загрузки сетевых фабрик. Удаление `META-INF/services/` приводит к фатальным падениям: `IllegalArgumentException: no NetworkModule installed for scheme "tcp"` или тихим сетевым сбоям при полностью корректном коде.
+- Перед передачей APK сверять наличие и целостность `META-INF/services/` в итоговом архиве.
+
+### 17.3. Визуальная фиксация интерфейса (Screen Before Action)
+- Перед обсуждением экранов, правкой верстки (`res/layout`, веб-ассеты, Compose) или эмуляцией кликов агент обязан зафиксировать фактический экран устройства:
+  ```bash
+  adb shell screencap -p /sdcard/screen.png
+  adb pull /sdcard/screen.png scratch/current_screen.png
+  adb shell uiautomator dump /sdcard/ui.xml
+  adb pull /sdcard/ui.xml scratch/ui.xml
+  ```
+- Рассуждать о структуре открытого экрана без актуального скриншота и XML-дерева запрещено.
+
+### 17.4. Протокол устранения `SecurityException` при `adb shell input tap`
+- Если команда `adb shell input tap x y` или `input keyevent` падает с ошибкой:
+  `java.lang.SecurityException: Injecting input events requires the caller to have the INJECT_EVENTS permission...`
+  - **Запрещено**: Повторять вызов в цикле или пытаться использовать `su/root`.
+  - **Обязательное действие**: Агент обязан уведомить пользователя о защите оболочки (MIUI / HyperOS / ColorOS) и дать четкую инструкцию:
+    *Открыть «Настройки» $\rightarrow$ «Для разработчиков» $\rightarrow$ включить тумблер **«Отладка по USB (Настройки безопасности)»** (USB debugging - Security settings).*
+
+### 17.5. Инвариант латинских путей (PATH-001)
+- Для любых проектов, использующих утилиты мобильной разработки (`apktool`, `aapt2`, `java`, `gradle`, `adb`), компиляторы C/C++ или `PyInstaller`, путь к рабочей директории **ОБЯЗАН содержать только ASCII-символы и не содержать пробелов**.
+- Кириллица в пути приводит к молчаливому краху утилит Android SDK с кодом `exit code 1` (`AndrolibException`).
+
+
