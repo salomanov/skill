@@ -2,6 +2,20 @@
 
 All notable changes to Project Guardian are documented in this file.
 
+## v1.7.11 - 2026-11-18
+
+### Added
+- **Universal Email Dispatcher (Раздел 19 в SKILL.md)**:
+  - Глобальный скрипт отправки почты `scripts/send-email.py` и PowerShell-обертка `scripts/send-email.ps1`.
+  - Поддержка вложений любого типа (файлы, картинки, архивы, EPUB/PDF, логи), SSL/TLS порт 465 (Mail.ru SMTP), кириллических имен файлов.
+  - Безопасная конфигурация в `~/.gemini/config/email_settings.json` (адрес получателя по умолчанию: `salomanov@ya.ru`, отправитель: `salomanov@list.ru`).
+  - Поведенческие триггеры в `SKILL.md`: автоматическая отправка по фразам *«напиши мне на почту»*, *«скинь мне на почту»*, *«отправь на email»* без лишних переспросов адреса.
+
+### Changed
+- `PROJECT_STATE.md` обновлен до версии 1.7.11.
+
+---
+
 ## v1.7.10 - 2026-11-15
 
 ### Fixed

@@ -3,9 +3,9 @@
 > Данный файл автоматически ведется агентом и служит долговременной памятью проекта.
 > При начале новой сессии агент считывает этот файл в первую очередь.
 
-- **Версия**: `v1.7.10` (Targeted Session Step Counter & False Alert Prevention)
-- **Статус**: Активен, Targeted Session Resolution Enforced
-- **Дата обновления**: 2026-11-15
+- **Версия**: `v1.7.11` (Universal Email Dispatcher)
+- **Статус**: Активен, Universal Email Gateway Enforced
+- **Дата обновления**: 2026-11-18
 
 
 ---
@@ -116,6 +116,8 @@
 
 ## 5. История Изменений
 
+- 🛡️ **Чекпоинт** [2026-11-18 10:59:55] (метка: 2026-11-18_10-59-55): v1.7.11 Universal Email Dispatcher
+
 - 🛡️ **Чекпоинт** [2026-11-15 23:34:57] (метка: 2026-11-15_23-34-57): v1.7.10 Targeted Session Step Counter & False Alert Prevention
 
 - 🛡️ **Чекпоинт** [2026-11-15 22:52:44] (метка: 2026-11-15_22-52-44): v1.7.9 Mechanical Step Counter & Context Hygiene Guard
@@ -221,6 +223,14 @@
 - **Чекпоинт**: Релиз v1.6.2 (Windows CLI UTF-8 Encoding & Firmware Checkpoint Separation).
 
 - 🛡️ **Чекпоинт** [2026-11-04 18:00:39] (метка: 2026-11-04_18-00-39): feat: record-failure subproject auto-detection and isolation
+### [2026-11-18 10:55]
+- **Что сделано**: Внедрен универсальный почтовый шлюз (Релиз v1.7.11):
+  1. `scripts/send-email.py` и `scripts/send-email.ps1`: универсальный скрипт отправки писем с поддержкой вложений любого формата, HTML/текста и SSL/TLS (Mail.ru SMTP).
+  2. Глобальная конфигурация `~/.gemini/config/email_settings.json` (адрес получателя по умолчанию: `salomanov@ya.ru`, отправитель: `salomanov@list.ru`).
+  3. `SKILL.md`: добавлен Раздел 19 «Универсальная отправка на почту» с триггерами *«напиши мне на почту»*, *«скинь мне на почту»*, *«отправь на email»*.
+  4. `CHANGELOG.md`: зафиксирован релиз v1.7.11.
+- **Чекпоинт**: Релиз v1.7.11 (Universal Email Dispatcher).
+
 ### [2026-11-15 23:30]
 - **Что сделано**: Устранено ложное срабатывание счетчика шагов на соседних сессиях (Релиз v1.7.10):
   1. `checkpoint.ps1` и `security-gate.ps1`: внедрен приоритетный резолв активной сессии через `$env:ANTIGRAVITY_CONVERSATION_ID` и параметр `-ConversationId`.
