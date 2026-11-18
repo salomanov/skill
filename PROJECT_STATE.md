@@ -116,6 +116,8 @@
 
 ## 5. История Изменений
 
+- 🛡️ **Чекпоинт** [2026-11-18 21:25:28] (метка: 2026-11-18_21-25-28): Pre-v1.8.0 Audit, Dialog Title Preservation, Auto-Graphify & Failure/Recommendation Gates
+
 - 🛡️ **Чекпоинт** [2026-11-18 10:59:55] (метка: 2026-11-18_10-59-55): v1.7.11 Universal Email Dispatcher
 
 - 🛡️ **Чекпоинт** [2026-11-15 23:34:57] (метка: 2026-11-15_23-34-57): v1.7.10 Targeted Session Step Counter & False Alert Prevention
