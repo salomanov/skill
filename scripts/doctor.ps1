@@ -7,8 +7,8 @@ $env:PYTHONIOENCODING = "utf-8"
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
-if ($ProjectPath -and (Test-Path $ProjectPath)) {
-    $ProjectPath = (Resolve-Path $ProjectPath).Path
+if ($ProjectPath -and (Test-Path -LiteralPath $ProjectPath)) {
+    $ProjectPath = (Resolve-Path -LiteralPath $ProjectPath).Path
 }
 
 Write-Host "`n=== [Project Guardian] Диагностика Окружения и Проекта (Doctor) ===" -ForegroundColor Cyan
@@ -38,29 +38,25 @@ function Report-Item {
 # 1. Проверка системных инструментов
 Write-Host "1. Системные инструменты и рантаймы:" -ForegroundColor Cyan
 
-# Git
 try {
     $gitVer = (& git --version 2>$null)
     if ($gitVer) { Report-Item "Git" "OK" $gitVer.Trim() }
     else { Report-Item "Git" "FAIL" "Не найден в PATH"; $script:allOk = $false }
 } catch { Report-Item "Git" "FAIL" "Ошибка вызова"; $script:allOk = $false }
 
-# Git Bash
 $gitBashPath = "C:\Program Files\Git\bin\bash.exe"
-if (Test-Path $gitBashPath) {
+if (Test-Path -LiteralPath $gitBashPath) {
     Report-Item "Git Bash" "OK" $gitBashPath
 } else {
     Report-Item "Git Bash" "WARN" "Не найден по стандартному пути $gitBashPath"
 }
 
-# Python
 try {
     $pyVer = (& python --version 2>&1)
     if ($LASTEXITCODE -eq 0 -and $pyVer) { Report-Item "Python" "OK" $pyVer.Trim() }
     else { Report-Item "Python" "WARN" "Не обнаружен в PATH" }
 } catch { Report-Item "Python" "WARN" "Не обнаружен в PATH" }
 
-# Node.js
 try {
     $nodeVer = (& node --version 2>$null)
     if ($nodeVer) { Report-Item "Node.js" "OK" $nodeVer.Trim() }
@@ -72,7 +68,7 @@ Write-Host "`n2. Состояние Git репозитория:" -ForegroundColo
 $isGit = $false
 try {
     $gitCheck = & git -C $ProjectPath rev-parse --is-inside-work-tree 2>$null
-    if ($LASTEXITCODE -eq 0 -and $gitCheck.Trim() -eq "true") {
+    if ($LASTEXITCODE -eq 0 -and $gitCheck -and $gitCheck.Trim() -eq "true") {
         $isGit = $true
     }
 } catch { $isGit = $false }
@@ -81,13 +77,11 @@ if ($isGit) {
     $branch = (& git -C $ProjectPath rev-parse --abbrev-ref HEAD 2>$null).Trim()
     Report-Item "Git репозиторий" "OK" "Текущая ветка: $branch"
 
-    # Проверка remote
     $remotes = (& git -C $ProjectPath remote -v 2>$null)
     if ($remotes) {
         $originUrl = (& git -C $ProjectPath remote get-url origin 2>$null)
         Report-Item "Git Remote (origin)" "OK" $originUrl
 
-        # Синхронизация с remote
         try {
             $counts = (& git -C $ProjectPath rev-list --left-right --count "HEAD...origin/$branch" 2>$null)
             if ($counts) {
@@ -103,7 +97,6 @@ if ($isGit) {
         Report-Item "Git Remote" "WARN" "Удаленный репозиторий не настроен"
     }
 
-    # Незакоммиченные изменения
     $statusPorcelain = (& git -C $ProjectPath status --porcelain 2>$null)
     if ($statusPorcelain) {
         $changedCount = ($statusPorcelain | Measure-Object).Count
@@ -118,28 +111,56 @@ if ($isGit) {
 # 3. Состояние Project Guardian компонентов
 Write-Host "`n3. Компоненты Project Guardian:" -ForegroundColor Cyan
 
-# PROJECT_STATE.md
 $stateFile = Join-Path $ProjectPath "PROJECT_STATE.md"
-if (Test-Path $stateFile) {
-    $mtime = (Get-Item $stateFile).LastWriteTime.ToString("yyyy-MM-dd HH:mm")
+if (Test-Path -LiteralPath $stateFile) {
+    $mtime = (Get-Item -LiteralPath $stateFile).LastWriteTime.ToString("yyyy-MM-dd HH:mm")
     Report-Item "Память проекта (PROJECT_STATE.md)" "OK" "Обновлен: $mtime"
 } else {
     Report-Item "Память проекта (PROJECT_STATE.md)" "WARN" "Файл памяти отсутствует"
 }
 
-# Проверка на составной воркспейс
-$subProjects = @(Get-ChildItem -Path $ProjectPath -Directory -ErrorAction SilentlyContinue | Where-Object {
-    $_.Name -notmatch '^(\.git|\.backups|node_modules|\.venv|venv|scratch)$' -and
-    (Test-Path (Join-Path $_.FullName "PROJECT_STATE.md"))
+# База ошибок (docs/ERRORS_AND_FAILURES.md)
+$errFile = Join-Path $ProjectPath "docs\ERRORS_AND_FAILURES.md"
+if (-not (Test-Path -LiteralPath $errFile)) {
+    $errFile = Join-Path $ProjectPath "ERRORS_AND_FAILURES.md"
+}
+if (Test-Path -LiteralPath $errFile) {
+    $errText = [System.IO.File]::ReadAllText($errFile, [System.Text.Encoding]::UTF8)
+    $incCount = ([regex]::Matches($errText, '### \[Инцидент ')).Count
+    Report-Item "База ошибок (ERRORS_AND_FAILURES.md)" "OK" "Зафиксировано инцидентов: $incCount"
+} else {
+    Report-Item "База ошибок (ERRORS_AND_FAILURES.md)" "WARN" "Файл отсутствует (создается через record-failure.ps1)"
+}
+
+# Рекомендации (AGENT_RECOMMENDATIONS.md)
+$recFile = Join-Path $ProjectPath "AGENT_RECOMMENDATIONS.md"
+if (Test-Path -LiteralPath $recFile) {
+    $recText = [System.IO.File]::ReadAllText($recFile, [System.Text.Encoding]::UTF8)
+    $openRecs = ([regex]::Matches($recText, '\[ \]\s*ТРЕБУЕТ ВНЕДРЕНИЯ')).Count
+    $doneRecs = ([regex]::Matches($recText, '\[x\]\s*ВЫПОЛНЕНО')).Count
+    if ($doneRecs -gt 0) {
+        Report-Item "Рекомендации (AGENT_RECOMMENDATIONS.md)" "FAIL" "Неархивированных [x]: $doneRecs, открытых [ ]: $openRecs (перенесите [x] в docs/APPLIED_RECOMMENDATIONS.md)"
+        $script:allOk = $false
+    } elseif ($openRecs -gt 0) {
+        Report-Item "Рекомендации (AGENT_RECOMMENDATIONS.md)" "WARN" "Открытых задач [ ] ТРЕБУЕТ ВНЕДРЕНИЯ: $openRecs"
+    } else {
+        Report-Item "Рекомендации (AGENT_RECOMMENDATIONS.md)" "OK" "Все рекомендации обработаны"
+    }
+} else {
+    Report-Item "Рекомендации (AGENT_RECOMMENDATIONS.md)" "OK" "Открытых входящих рекомендаций нет"
+}
+
+$subProjects = @(Get-ChildItem -LiteralPath $ProjectPath -Directory -ErrorAction SilentlyContinue | Where-Object {
+    $_.Name -notmatch '^(\.git|\.backups|node_modules|\.venv|venv|scratch|graphify-out)$' -and
+    (Test-Path -LiteralPath (Join-Path $_.FullName "PROJECT_STATE.md"))
 })
 if ($subProjects.Count -gt 0) {
     Report-Item "Составной воркспейс" "OK" "Обнаружены подпроекты ($($subProjects.Count)): $($subProjects.Name -join ', ')"
 }
 
-# .backups
 $backupDir = Join-Path $ProjectPath ".backups"
-if (Test-Path $backupDir) {
-    $cps = Get-ChildItem -Path $backupDir -Directory -ErrorAction SilentlyContinue
+if (Test-Path -LiteralPath $backupDir) {
+    $cps = Get-ChildItem -LiteralPath $backupDir -Directory -ErrorAction SilentlyContinue
     $totalBackups = ($cps | Measure-Object).Count
     $releases = ($cps | Where-Object { $_.Name -like "*release*" -or $_.Name -like "firmware_success_*" } | Measure-Object).Count
     Report-Item "Резервные копии (.backups/)" "OK" "Всего: $totalBackups (из них релизов/прошивок: $releases)"
@@ -147,23 +168,22 @@ if (Test-Path $backupDir) {
     Report-Item "Резервные копии (.backups/)" "WARN" "Папка еще не создана"
 }
 
-# graphify
 $graphifyDir = Join-Path $ProjectPath "graphify-out"
-if (Test-Path $graphifyDir) {
+if (Test-Path -LiteralPath $graphifyDir) {
     $graphJson = Join-Path $graphifyDir "graph.json"
-    if (Test-Path $graphJson) {
-        $gmtime = (Get-Item $graphJson).LastWriteTime.ToString("yyyy-MM-dd HH:mm")
+    if (Test-Path -LiteralPath $graphJson) {
+        $gmtime = (Get-Item -LiteralPath $graphJson).LastWriteTime.ToString("yyyy-MM-dd HH:mm")
         Report-Item "Граф знаний (graphify)" "OK" "Граф построен ($gmtime)"
     } else {
         Report-Item "Граф знаний (graphify)" "WARN" "Папка есть, но graph.json не найден"
     }
 } else {
-    Report-Item "Граф знаний (graphify)" "WARN" "Папка graphify-out/ не найдена (рекомендуется /graphify)"
+    Report-Item "Граф знаний (graphify)" "WARN" "Папка graphify-out/ не найдена (создастся автоматически при checkpoint.ps1)"
 }
 
 # Security Gate
 $secGateScript = Join-Path $PSScriptRoot "security-gate.ps1"
-if (Test-Path $secGateScript) {
+if (Test-Path -LiteralPath $secGateScript) {
     Write-Host "`n4. Экспресс-проверка Security Gate:" -ForegroundColor Cyan
     try {
         & $secGateScript -ProjectPath $ProjectPath

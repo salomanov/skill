@@ -12,6 +12,11 @@
     [string]$SubProject = "",    # Явное указание подпроекта в составном воркспейсе / монорепозитории
     [switch]$IncludeSubprojects = $false, # При бэкапе корня воркспейса включать вложенные проекты
     [string]$ConversationId = "",         # Явный ID диалога (по умолчанию берется из $env:ANTIGRAVITY_CONVERSATION_ID)
+    [string]$FailureTitle = "",           # Опционально: зафиксировать ошибку перед чекпоинтом
+    [string]$Symptom = "",
+    [string]$RootCause = "",
+    [string]$Solution = "",
+    [switch]$RecommendToSkill = $false,
     [Parameter(ValueFromRemainingArguments=$true)]
     [string[]]$ExtraArgs
 )
@@ -53,7 +58,6 @@ function Get-ActiveSessionStepCount {
 
     $brainRoot = Join-Path $HOME '.gemini/antigravity/brain'
 
-    # Если ID не определен через env или параметр, проверяем свежие файлы (не директории!) за последние 60 сек
     if (-not $resolvedId) {
         if (Test-Path -LiteralPath $brainRoot -PathType Container) {
             $cutoff = (Get-Date).AddSeconds(-60)
@@ -114,30 +118,33 @@ function Get-ActiveSessionStepCount {
 $activeSteps = Get-ActiveSessionStepCount -TargetConversationId $ConversationId
 
 # 0. Нормализация пути и автоопределение подпроекта в составных воркспейсах
-if ($ProjectPath -and (Test-Path $ProjectPath)) {
-    $ProjectPath = (Resolve-Path $ProjectPath).Path
+if ($ProjectPath -and (Test-Path -LiteralPath $ProjectPath)) {
+    $ProjectPath = (Resolve-Path -LiteralPath $ProjectPath).Path
 }
 
+$isCompositeRoot = $false
 if ($SubProject) {
     $candidateSub = Join-Path $ProjectPath $SubProject
-    if (Test-Path $candidateSub) {
-        $ProjectPath = (Resolve-Path $candidateSub).Path
+    if (Test-Path -LiteralPath $candidateSub) {
+        $ProjectPath = (Resolve-Path -LiteralPath $candidateSub).Path
         Write-Host "[Project Guardian] 🎯 Выбран подпроект: $ProjectPath" -ForegroundColor Cyan
     } else {
         Write-Warning "Указанный подпроект '$SubProject' не найден в $ProjectPath"
     }
 } else {
-    # Проверяем, является ли $ProjectPath контейнером нескольких подпроектов (каждый со своим PROJECT_STATE.md)
-    $subProjects = @(Get-ChildItem -Path $ProjectPath -Directory -ErrorAction SilentlyContinue | Where-Object {
-        $_.Name -notmatch '^(\.git|\.backups|node_modules|\.venv|venv|scratch)$' -and
-        (Test-Path (Join-Path $_.FullName "PROJECT_STATE.md"))
+    $subProjects = @(Get-ChildItem -LiteralPath $ProjectPath -Directory -ErrorAction SilentlyContinue | Where-Object {
+        $_.Name -notmatch '^(\.git|\.backups|node_modules|\.venv|venv|scratch|graphify-out)$' -and
+        (Test-Path -LiteralPath (Join-Path $_.FullName "PROJECT_STATE.md"))
     })
 
     if ($subProjects.Count -gt 0) {
-        # Пытаемся определить активный подпроект по незакоммиченным файлам в Git
+        $isCompositeRoot = $true
         $gitSub = $null
         try {
+            $prevEAP = $ErrorActionPreference
+            $ErrorActionPreference = "Continue"
             $gitStatus = & git -C $ProjectPath status --porcelain 2>$null
+            $ErrorActionPreference = $prevEAP
             if ($gitStatus) {
                 $subHits = @{}
                 foreach ($sp in $subProjects) {
@@ -159,6 +166,7 @@ if ($SubProject) {
 
         if ($gitSub) {
             $ProjectPath = $gitSub
+            $isCompositeRoot = $false
             $spName = Split-Path $ProjectPath -Leaf
             Write-Host "[Project Guardian] 🎯 Автоопределение: активный подпроект '$spName' (по изменениям Git)." -ForegroundColor Cyan
             Write-Host "   Чекпоинт создается изолированно в $ProjectPath\.backups" -ForegroundColor Gray
@@ -169,6 +177,76 @@ if ($SubProject) {
     }
 }
 
+# 0.2. Синхронизация сохранённого названия диалога из .agents/HANDOFF.md в conversation_summaries.db
+$handoffFile = Join-Path $ProjectPath ".agents\HANDOFF.md"
+if (Test-Path -LiteralPath $handoffFile) {
+    try {
+        $hLines = Get-Content -LiteralPath $handoffFile -Encoding UTF8 -ErrorAction SilentlyContinue
+        $savedTitle = ""
+        foreach ($hl in $hLines) {
+            if ($hl -match '^- \*\*Название диалога\*\*:\s*(.+)$') {
+                $savedTitle = $matches[1].Trim()
+                break
+            }
+        }
+        if ($savedTitle) {
+            $titleHelper = Join-Path $PSScriptRoot "get_dialog_title.py"
+            $pyCmdTitle = Get-Command python -ErrorAction SilentlyContinue
+            if ($pyCmdTitle -and (Test-Path -LiteralPath $titleHelper)) {
+                $prevEAP = $ErrorActionPreference
+                $ErrorActionPreference = "Continue"
+                $synced = (& $pyCmdTitle.Source $titleHelper --mode set --cid $ConversationId --path $ProjectPath --title $savedTitle 2>$null)
+                $ErrorActionPreference = $prevEAP
+                if ($synced) {
+                    Write-Host "[Project Guardian] 🏷️ Название диалога синхронизировано: $savedTitle" -ForegroundColor Magenta
+                }
+            }
+        }
+    } catch {}
+}
+
+# 0.5. Встроенная фиксация ошибки (если передан -FailureTitle) и FAIL-GUARD / REC-GUARD
+if ($FailureTitle) {
+    $recFailScript = Join-Path $PSScriptRoot "record-failure.ps1"
+    if (Test-Path -LiteralPath $recFailScript) {
+        $rfParams = @{
+            Title = $FailureTitle
+            ProjectPath = $ProjectPath
+            NoCheckpoint = $true
+        }
+        if ($Symptom) { $rfParams.Symptom = $Symptom }
+        if ($RootCause) { $rfParams.RootCause = $RootCause }
+        if ($Solution) { $rfParams.Solution = $Solution }
+        if ($RecommendToSkill) { $rfParams.RecommendToSkill = $true }
+        & $recFailScript @rfParams
+    }
+} elseif ($Message -notmatch '^failure:' -and $Message -match '(?i)\b(fix|fixed|bug|crash|hang|deadlock|error|regression)\b|исправ|ошибк|сбой|краш|баг|зависан|регресс') {
+    $errFile1 = Join-Path $ProjectPath "docs\ERRORS_AND_FAILURES.md"
+    $errFile2 = Join-Path $ProjectPath "ERRORS_AND_FAILURES.md"
+    $errFileFound = if (Test-Path -LiteralPath $errFile1) { $errFile1 } elseif (Test-Path -LiteralPath $errFile2) { $errFile2 } else { $null }
+    $isRecent = $false
+    if ($errFileFound) {
+        $lastMod = (Get-Item -LiteralPath $errFileFound).LastWriteTime
+        if ($lastMod -ge (Get-Date).AddMinutes(-30)) { $isRecent = $true }
+    }
+    if (-not $isRecent) {
+        Write-Host "`n[FAIL-GUARD] ⚠️ Обнаружен багфикс-чекпоинт ('$Message') без свежей записи в docs/ERRORS_AND_FAILURES.md!" -ForegroundColor Yellow
+        Write-Host "  Правило Guardian: фиксируйте первопричину сбоя через record-failure.ps1 (или передайте -FailureTitle)." -ForegroundColor DarkYellow
+    }
+}
+
+# Проверка входящих рекомендаций (REC-GUARD)
+$recFileCheck = Join-Path $ProjectPath "AGENT_RECOMMENDATIONS.md"
+if (Test-Path -LiteralPath $recFileCheck) {
+    try {
+        $recText = [System.IO.File]::ReadAllText($recFileCheck, [System.Text.Encoding]::UTF8)
+        $openRecs = ([regex]::Matches($recText, '\[ \]\s*ТРЕБУЕТ ВНЕДРЕНИЯ')).Count
+        if ($openRecs -gt 0) {
+            Write-Host "[REC-GUARD] 📌 В AGENT_RECOMMENDATIONS.md ожидают внедрения: $openRecs шт." -ForegroundColor Yellow
+        }
+    } catch {}
+}
+
 # 1. Определение категории проекта (Автоопределение или явное указание)
 if ($Firmware) {
     $Category = "Firmware"
@@ -176,22 +254,19 @@ if ($Firmware) {
 }
 
 if ($Category -eq "Auto") {
-    # Поиск маркеров микроконтроллеров/прошивок
-    $isFirmwareProject = (Test-Path (Join-Path $ProjectPath "platformio.ini")) -or 
-                         (Get-ChildItem -Path $ProjectPath -Filter "*.ino" -ErrorAction SilentlyContinue) -or
-                         (Get-ChildItem -Path $ProjectPath -Filter "*.ioc" -ErrorAction SilentlyContinue)
+    $isFirmwareProject = (Test-Path -LiteralPath (Join-Path $ProjectPath "platformio.ini")) -or 
+                         (Get-ChildItem -LiteralPath $ProjectPath -Filter "*.ino" -ErrorAction SilentlyContinue) -or
+                         (Get-ChildItem -LiteralPath $ProjectPath -Filter "*.ioc" -ErrorAction SilentlyContinue)
 
-    # Поиск маркеров десктопных приложений для ПК
-    $isDesktopProject = (Get-ChildItem -Path $ProjectPath -Filter "*.spec" -ErrorAction SilentlyContinue) -or
-                        (Get-ChildItem -Path $ProjectPath -Filter "*.csproj" -ErrorAction SilentlyContinue) -or
-                        (Get-ChildItem -Path $ProjectPath -Filter "*app.py" -ErrorAction SilentlyContinue) -or
-                        (Get-ChildItem -Path $ProjectPath -Filter "*main.py" -ErrorAction SilentlyContinue)
+    $isDesktopProject = (Get-ChildItem -LiteralPath $ProjectPath -Filter "*.spec" -ErrorAction SilentlyContinue) -or
+                        (Get-ChildItem -LiteralPath $ProjectPath -Filter "*.csproj" -ErrorAction SilentlyContinue) -or
+                        (Get-ChildItem -LiteralPath $ProjectPath -Filter "*app.py" -ErrorAction SilentlyContinue) -or
+                        (Get-ChildItem -LiteralPath $ProjectPath -Filter "*main.py" -ErrorAction SilentlyContinue)
 
-    # Поиск маркеров веб-сайтов и веб-приложений
-    $isWebProject = (Test-Path (Join-Path $ProjectPath "package.json")) -or 
-                    (Test-Path (Join-Path $ProjectPath "index.html")) -or
-                    (Test-Path (Join-Path $ProjectPath "vite.config.*")) -or
-                    (Test-Path (Join-Path $ProjectPath "next.config.*"))
+    $isWebProject = (Test-Path -LiteralPath (Join-Path $ProjectPath "package.json")) -or 
+                    (Test-Path -LiteralPath (Join-Path $ProjectPath "index.html")) -or
+                    (Get-ChildItem -LiteralPath $ProjectPath -Filter "vite.config.*" -ErrorAction SilentlyContinue) -or
+                    (Get-ChildItem -LiteralPath $ProjectPath -Filter "next.config.*" -ErrorAction SilentlyContinue)
 
     if ($isFirmwareProject) {
         $Category = "Firmware"
@@ -257,7 +332,7 @@ switch ($Category) {
 }
 
 $currentBackupDir = Join-Path $backupRoot "${backupPrefix}_$timestamp"
-if (Test-Path $currentBackupDir) {
+if (Test-Path -LiteralPath $currentBackupDir) {
     $timestamp = $now.ToString("yyyy-MM-dd_HH-mm-ss_fff")
     $currentBackupDir = Join-Path $backupRoot "${backupPrefix}_$timestamp"
 }
@@ -273,20 +348,20 @@ if ($Verify) {
     $testPassed = $true
     $testFound = $false
 
-    # Проверка Python тестов: папка tests/ или test/, либо файлы в корне (без тяжелой рекурсии)
-    $hasPyTestDir = (Test-Path (Join-Path $ProjectPath "tests")) -or (Test-Path (Join-Path $ProjectPath "test"))
-    $pyTestFiles = @()
+    $hasPyTestDir = (Test-Path -LiteralPath (Join-Path $ProjectPath "tests")) -or (Test-Path -LiteralPath (Join-Path $ProjectPath "test"))
     if ($hasPyTestDir) {
         $testFound = $true
     } else {
-        $pyTestFiles = Get-ChildItem -Path $ProjectPath -Filter "test_*.py" -File -Depth 2 -ErrorAction SilentlyContinue | Where-Object {
-            $_.FullName -notmatch "[\\/](\.git|\.backups|node_modules|\.venv|venv|scratch)[\\/]"
+        $pyTestFiles = Get-ChildItem -LiteralPath $ProjectPath -Filter "test_*.py" -File -Depth 2 -ErrorAction SilentlyContinue | Where-Object {
+            $_.FullName -notmatch "[\\/](\.git|\.backups|node_modules|\.venv|venv|scratch|graphify-out)[\\/]"
         }
         if ($pyTestFiles.Count -gt 0) { $testFound = $true }
     }
 
     if ($testFound) {
         Write-Host "Обнаружены тесты Python. Запуск тестов..." -ForegroundColor Gray
+        $prevEAP = $ErrorActionPreference
+        $ErrorActionPreference = "Continue"
         $null = & python -c "import pytest" 2>$null
         if ($LASTEXITCODE -eq 0) {
             & python -m pytest $ProjectPath -q
@@ -295,18 +370,21 @@ if ($Verify) {
             & python -m unittest discover -s $ProjectPath -q 2>$null
             if ($LASTEXITCODE -ne 0) { $testPassed = $false }
         }
+        $ErrorActionPreference = $prevEAP
     }
 
-    # Проверка npm test
     $pkgJson = Join-Path $ProjectPath "package.json"
-    if (-not $testFound -and (Test-Path $pkgJson)) {
+    if (-not $testFound -and (Test-Path -LiteralPath $pkgJson)) {
         try {
-            $pkg = Get-Content $pkgJson -Raw | ConvertFrom-Json
+            $pkg = Get-Content -LiteralPath $pkgJson -Raw | ConvertFrom-Json
             if ($pkg.scripts.test -and $pkg.scripts.test -notmatch "no test specified") {
                 $testFound = $true
                 Write-Host "Обнаружен npm test. Запуск..." -ForegroundColor Gray
+                $prevEAP = $ErrorActionPreference
+                $ErrorActionPreference = "Continue"
                 & npm test --prefix $ProjectPath --silent 2>$null
                 if ($LASTEXITCODE -ne 0) { $testPassed = $false }
+                $ErrorActionPreference = $prevEAP
             }
         } catch {}
     }
@@ -323,11 +401,33 @@ if ($Verify) {
     }
 }
 
+# 2.7. Обеспечиваем .gitignore и .graphifyignore ДО запуска Graphify и создания бэкапа
+$gitignorePath = Join-Path $ProjectPath ".gitignore"
+$giContent = if (Test-Path -LiteralPath $gitignorePath) { Get-Content -LiteralPath $gitignorePath -Raw -ErrorAction SilentlyContinue } else { "" }
+$giAdded = @()
+foreach ($ignoreLine in @(".backups/", "scratch/")) {
+    $esc = [regex]::Escape($ignoreLine)
+    if ($giContent -notmatch "(?m)^$esc\s*$") {
+        $giAdded += $ignoreLine
+    }
+}
+if ($giAdded.Count -gt 0) {
+    $appendBlock = "`n" + ($giAdded -join "`n") + "`n"
+    [System.IO.File]::AppendAllText($gitignorePath, $appendBlock, [System.Text.Encoding]::UTF8)
+    Write-Host "Добавлены исключения в .gitignore: $($giAdded -join ', ')" -ForegroundColor Green
+}
+
+$graphifyIgnorePath = Join-Path $ProjectPath ".graphifyignore"
+if (-not (Test-Path -LiteralPath $graphifyIgnorePath)) {
+    $gIgnoreContent = ".backups/`nscratch/`nnode_modules/`n.venv/`nvenv/`n__pycache__/`ndist/`nbuild/`n.git/`n"
+    [System.IO.File]::WriteAllText($graphifyIgnorePath, $gIgnoreContent, (New-Object System.Text.UTF8Encoding $false))
+}
+
 # 2.8. Своевременное обновление даты в PROJECT_STATE.md (ДО создания снимка бэкапа и ДО git commit)
 $stateFile = Join-Path $ProjectPath "PROJECT_STATE.md"
-if (Test-Path $stateFile) {
+if (Test-Path -LiteralPath $stateFile) {
     try {
-        $stateContent = Get-Content $stateFile -Raw -Encoding UTF8
+        $stateContent = Get-Content -LiteralPath $stateFile -Raw -Encoding UTF8
         $entryPrefix = switch ($Category) {
             "Firmware" { if ($Release) { "🔥 **УДАЧНАЯ ПРОШИВКА**" } else { "🔥 **Чекпоинт (Прошивка)**" } }
             "Desktop"  { if ($Release) { "🖥️ **РЕЛИЗ ДЕСКТОП-ПРИЛОЖЕНИЯ**" } else { "🖥️ **Чекпоинт (ПК)**" } }
@@ -335,7 +435,6 @@ if (Test-Path $stateFile) {
             default    { "🛡️ **Чекпоинт**" }
         }
         $logEntry = "`n- $entryPrefix [$readableDate] (метка: $timestamp): $Message"
-        # Поддержка как старого формата (## 5.), так и нового эталонного шаблона (## 10. или любого номера)
         if ($stateContent -match "(## (?:\d+\.\s*)?История Изменений[^\r\n]*)") {
             $stateContent = $stateContent -replace "(## (?:\d+\.\s*)?История Изменений[^\r\n]*)", "`$1`n$logEntry"
             [System.IO.File]::WriteAllText($stateFile, $stateContent, [System.Text.Encoding]::UTF8)
@@ -346,68 +445,63 @@ if (Test-Path $stateFile) {
     }
 }
 
-# 2.9. Автоматическое обновление графа знаний (graphify)
-$graphifyDir = Join-Path $ProjectPath "graphify-out"
-if ((Test-Path $graphifyDir) -and (-not $NoGraphify)) {
-    Write-Host "`n=== Обновление Графа Знаний (Graphify) ===" -ForegroundColor Cyan
+# 2.9. Автоматическая инициализация и инкрементальное обновление графа знаний (Graphify v1.8.0)
+if (-not $NoGraphify -and -not $isCompositeRoot) {
+    $graphifyJson = Join-Path $ProjectPath "graphify-out\graph.json"
+    Write-Host "`n=== Граф Знаний (Graphify) ===" -ForegroundColor Cyan
+    $prevEAP = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
     try {
         $pyCmd = Get-Command python -ErrorAction SilentlyContinue
         if ($pyCmd) {
-            Write-Host "Инкрементальный анализ кодовой базы через graphify..." -ForegroundColor Gray
-            & $pyCmd.Source -m graphify extract $ProjectPath --code-only 2>$null
-            & $pyCmd.Source -m graphify cluster-only $ProjectPath 2>$null
-            if ($LASTEXITCODE -eq 0) {
-                Write-Host "[OK] Граф знаний graphify успешно актуализирован!" -ForegroundColor Green
-            } else {
-                Write-Host "[!] Завершено с кодом $LASTEXITCODE" -ForegroundColor Yellow
+            Push-Location -LiteralPath $ProjectPath
+            try {
+                if (Test-Path -LiteralPath $graphifyJson) {
+                    Write-Host "Инкрементальное обновление графа (graphify update)..." -ForegroundColor Gray
+                    $gOut = & $pyCmd.Source -m graphify update $ProjectPath 2>&1
+                } else {
+                    Write-Host "Первичная инициализация графа кода (graphify extract --code-only)..." -ForegroundColor Gray
+                    $gOut = & $pyCmd.Source -m graphify extract $ProjectPath --code-only 2>&1
+                }
+                if ($LASTEXITCODE -eq 0 -and (Test-Path -LiteralPath $graphifyJson)) {
+                    Write-Host "[OK] Граф знаний graphify актуален: $graphifyJson" -ForegroundColor Green
+                } else {
+                    Write-Host "[!] Graphify завершился с кодом $LASTEXITCODE (возможно, нет поддерживаемых файлов кода)." -ForegroundColor Yellow
+                }
+            } finally {
+                Pop-Location
             }
         }
     } catch {
         Write-Warning "Не удалось обновить graphify: $_"
+    } finally {
+        $ErrorActionPreference = $prevEAP
     }
 }
 
 # 3. Создание бэкапа
 try {
-    if (-not (Test-Path $backupRoot)) {
+    if (-not (Test-Path -LiteralPath $backupRoot)) {
         New-Item -ItemType Directory -Path $backupRoot -Force | Out-Null
     }
 
-    # Обеспечиваем наличие .backups в .gitignore
-    $gitignorePath = Join-Path $ProjectPath ".gitignore"
-    $needGitignoreUpdate = $true
-    if (Test-Path $gitignorePath) {
-        $giContent = Get-Content $gitignorePath -Raw -ErrorAction SilentlyContinue
-        if ($giContent -match "^\.backups/" -or $giContent -match "\r?\n\.backups/") {
-            $needGitignoreUpdate = $false
-        }
-    }
-    if ($needGitignoreUpdate) {
-        Add-Content -Path $gitignorePath -Value "`n.backups/" -Encoding UTF8
-        Write-Host "Добавлена запись .backups/ в .gitignore" -ForegroundColor Green
-    }
-
-    # Создаем изолированную директорию (никогда не перезаписывает старые)
     New-Item -ItemType Directory -Path $currentBackupDir -Force | Out-Null
 
-    # Исключения зависимостей и временных файлов
-    $excludeDirs = @(".git", ".backups", "node_modules", ".venv", "venv", "__pycache__", "dist", "build", ".next", ".nuxt", ".turbo", "bin", "obj", "scratch")
+    $excludeDirs = @(".git", ".backups", "node_modules", ".venv", "venv", "__pycache__", "dist", "build", ".next", ".nuxt", ".turbo", "bin", "obj", "scratch", "graphify-out")
 
-    # Если мы находимся в корне составного воркспейса, исключаем вложенные подпроекты, чтобы не дублировать гигабайты
     if (-not $IncludeSubprojects) {
-        $nestedSubProjects = @(Get-ChildItem -Path $ProjectPath -Directory -ErrorAction SilentlyContinue | Where-Object {
-            $_.Name -notmatch '^(\.git|\.backups|node_modules|\.venv|venv|scratch)$' -and
-            (Test-Path (Join-Path $_.FullName "PROJECT_STATE.md"))
+        $nestedSubProjects = @(Get-ChildItem -LiteralPath $ProjectPath -Directory -ErrorAction SilentlyContinue | Where-Object {
+            $_.Name -notmatch '^(\.git|\.backups|node_modules|\.venv|venv|scratch|graphify-out)$' -and
+            (Test-Path -LiteralPath (Join-Path $_.FullName "PROJECT_STATE.md"))
         })
         foreach ($nsp in $nestedSubProjects) {
             $excludeDirs += $nsp.Name
         }
     }
 
-    # Копирование исходников
-    $items = Get-ChildItem -Path $ProjectPath -Force | Where-Object { $excludeDirs -notcontains $_.Name }
+    $items = Get-ChildItem -LiteralPath $ProjectPath -Force | Where-Object { $excludeDirs -notcontains $_.Name }
     foreach ($item in $items) {
-        Copy-Item -Path $item.FullName -Destination $currentBackupDir -Recurse -Force
+        Copy-Item -LiteralPath $item.FullName -Destination $currentBackupDir -Recurse -Force
     }
 
     # 4. Сохранение релизных артефактов в зависимости от категории
@@ -417,11 +511,11 @@ try {
         $firmwareBinDir = Join-Path $currentBackupDir "firmware_binaries"
         New-Item -ItemType Directory -Path $firmwareBinDir -Force | Out-Null
         $binExtensions = @("*.bin", "*.hex", "*.elf", "*.uf2", "*.dfu", "*.img", "*.ota")
-        $foundBinaries = Get-ChildItem -Path $ProjectPath -Recurse -Include $binExtensions -File -ErrorAction SilentlyContinue | Where-Object { $_.FullName -notlike "*\.backups\*" }
+        $foundBinaries = Get-ChildItem -LiteralPath $ProjectPath -Recurse -Include $binExtensions -File -ErrorAction SilentlyContinue | Where-Object { $_.FullName -notlike "*\.backups\*" }
 
         foreach ($bin in $foundBinaries) {
-            Copy-Item -Path $bin.FullName -Destination (Join-Path $firmwareBinDir $bin.Name) -Force
-            $hash = (Get-FileHash -Path $bin.FullName -Algorithm SHA256).Hash
+            Copy-Item -LiteralPath $bin.FullName -Destination (Join-Path $firmwareBinDir $bin.Name) -Force
+            $hash = (Get-FileHash -LiteralPath $bin.FullName -Algorithm SHA256).Hash
             $savedArtifacts += [PSCustomObject]@{ Name = $bin.Name; SizeKB = [math]::Round($bin.Length / 1KB, 2); SHA256 = $hash }
             Write-Host "  [Бинарник сохранен]: $($bin.Name) ($([math]::Round($bin.Length / 1KB, 2)) KB)" -ForegroundColor Magenta
         }
@@ -430,12 +524,11 @@ try {
         $desktopBinDir = Join-Path $currentBackupDir "desktop_binaries"
         New-Item -ItemType Directory -Path $desktopBinDir -Force | Out-Null
         $exeExtensions = @("*.exe", "*.msi", "*.dll", "*.zip")
-        # Ищем в dist/ и корне
-        $foundExes = Get-ChildItem -Path $ProjectPath -Recurse -Include $exeExtensions -File -ErrorAction SilentlyContinue | Where-Object { $_.FullName -notlike "*\.backups\*" -and $_.FullName -notlike "*\node_modules\*" -and $_.FullName -notlike "*\.venv\*" }
+        $foundExes = Get-ChildItem -LiteralPath $ProjectPath -Recurse -Include $exeExtensions -File -ErrorAction SilentlyContinue | Where-Object { $_.FullName -notlike "*\.backups\*" -and $_.FullName -notlike "*\node_modules\*" -and $_.FullName -notlike "*\.venv\*" }
 
         foreach ($f in $foundExes) {
-            Copy-Item -Path $f.FullName -Destination (Join-Path $desktopBinDir $f.Name) -Force
-            $hash = (Get-FileHash -Path $f.FullName -Algorithm SHA256).Hash
+            Copy-Item -LiteralPath $f.FullName -Destination (Join-Path $desktopBinDir $f.Name) -Force
+            $hash = (Get-FileHash -LiteralPath $f.FullName -Algorithm SHA256).Hash
             $savedArtifacts += [PSCustomObject]@{ Name = $f.Name; SizeKB = [math]::Round($f.Length / 1KB, 2); SHA256 = $hash }
             Write-Host "  [Десктоп бинарник/EXE сохранен]: $($f.Name) ($([math]::Round($f.Length / 1KB, 2)) KB)" -ForegroundColor Magenta
         }
@@ -446,14 +539,13 @@ try {
         $distFolders = @("dist", "build", "out")
         foreach ($df in $distFolders) {
             $srcDist = Join-Path $ProjectPath $df
-            if (Test-Path $srcDist) {
-                Copy-Item -Path $srcDist -Destination (Join-Path $webDistDir $df) -Recurse -Force
+            if (Test-Path -LiteralPath $srcDist) {
+                Copy-Item -LiteralPath $srcDist -Destination (Join-Path $webDistDir $df) -Recurse -Force
                 Write-Host "  [Веб-сборка сохранена]: $df" -ForegroundColor Magenta
             }
         }
     }
 
-    # Генерация паспорта релиза
     if ($Release) {
         $passportContent = @"
 # Паспорт релиза: $backupPrefix [$timestamp]
@@ -484,22 +576,36 @@ catch {
     Write-Warning "Не удалось создать файловый бэкап в .backups: $_"
 }
 
-# 5. Обработка Git
+# 5. Обработка Git (с Auto-Git-Init для одиночных проектов)
 $isGit = $false
+$prevEAP = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
 try {
     $gitCheck = & git -C $ProjectPath rev-parse --is-inside-work-tree 2>$null
-    if ($LASTEXITCODE -eq 0 -and $gitCheck.Trim() -eq "true") {
+    if ($LASTEXITCODE -eq 0 -and $gitCheck -and $gitCheck.Trim() -eq "true") {
         $isGit = $true
+    } elseif (-not $isCompositeRoot) {
+        $gitCmd = Get-Command git -ErrorAction SilentlyContinue
+        if ($gitCmd) {
+            & git -C $ProjectPath init 2>$null | Out-Null
+            if ($LASTEXITCODE -eq 0) {
+                $isGit = $true
+                Write-Host "[Project Guardian] 🆕 Автоматически инициализирован локальный Git-репозиторий (git init)." -ForegroundColor Cyan
+            }
+        }
     }
 } catch {
     $isGit = $false
 }
+$ErrorActionPreference = $prevEAP
 
 if ($isGit) {
     Write-Host "`n=== Обработка Git ===" -ForegroundColor Cyan
+    $prevEAP = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
     try {
-        & git -C $ProjectPath add -A
-        $status = & git -C $ProjectPath status --porcelain
+        & git -C $ProjectPath add -A 2>$null
+        $status = & git -C $ProjectPath status --porcelain 2>$null
         $tagPrefix = $Category.ToLower()
 
         $commitPrefix = switch ($Category) {
@@ -517,17 +623,15 @@ if ($isGit) {
             Write-Host "В Git нет незафиксированных изменений рабочего дерева." -ForegroundColor Yellow
         }
 
-        # Если это релиз или прошивка — создаем уникальный Git-тег с датой и временем
         if ($Release) {
             $tagName = "$tagPrefix-v$timestamp"
             & git -C $ProjectPath tag -a $tagName -m "Релиз ($Category): $Message ($readableDate)"
             Write-Host "[OK] Создан уникальный Git-тег: $tagName" -ForegroundColor Magenta
         }
 
-        # Проверка remote для push (только по явному -Push)
-        $remotes = & git -C $ProjectPath remote
+        $remotes = & git -C $ProjectPath remote 2>$null
         if ($remotes -and $Push -and -not $NoPush) {
-            $currentBranch = (& git -C $ProjectPath rev-parse --abbrev-ref HEAD).Trim()
+            $currentBranch = (& git -C $ProjectPath rev-parse --abbrev-ref HEAD 2>$null).Trim()
             if ($currentBranch -and $currentBranch -ne "HEAD") {
                 Write-Host "Отправка изменений в origin/$currentBranch..." -ForegroundColor Cyan
                 & git -C $ProjectPath push origin $currentBranch
@@ -548,6 +652,8 @@ if ($isGit) {
     }
     catch {
         Write-Warning "Ошибка при выполнении операций Git: $_"
+    } finally {
+        $ErrorActionPreference = $prevEAP
     }
 } else {
     Write-Host "Папка не является Git-репозиторием. Локальный бэкап успешно создан." -ForegroundColor Gray

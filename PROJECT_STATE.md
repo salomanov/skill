@@ -3,9 +3,9 @@
 > Данный файл автоматически ведется агентом и служит долговременной памятью проекта.
 > При начале новой сессии агент считывает этот файл в первую очередь.
 
-- **Версия**: `v1.7.11` (Universal Email Dispatcher)
-- **Статус**: Активен, Universal Email Gateway Enforced
-- **Дата обновления**: 2026-11-18
+- **Версия**: `v1.8.0` (Auto-Graphify, Dialog Title Preservation, Failure & Recommendation Gates)
+- **Статус**: Активен, Auto-Graphify & Execution Guardrails Enforced
+- **Дата обновления**: 2026-11-20
 
 
 ---
@@ -113,8 +113,13 @@
 14. Для создания scratch-скриптов использовать генератор `new-scratch.ps1`, исключающий пропуск `sys.stdout.reconfigure` и кредов.
 15. При достижении диалогом 150–200 шагов обязательна передача контекста через `prepare-handoff.ps1` во избежание когнитивной деградации.
 16. В вызовах `Test-Path` на файлах проекта обязательно использовать `-LiteralPath` во избежание краха `WildcardPatternException` на путях с квадратными скобками (`[id]`, `log (2).txt`).
+17. В `checkpoint.ps1` запуск `graphify` не должен блокироваться условием `if (Test-Path $graphifyDir)` и обязан выполняться с `$ErrorActionPreference = "Continue"` ПОСЛЕ добавления `.backups/` в `.gitignore` и `.graphifyignore` (иначе PowerShell 5.1 обрывает `python -m graphify` на `stderr`, а новые проекты остаются без графа).
+18. В `prepare-handoff.ps1` запрещено писать ```` ```text ```` внутри двойного here-string `@"..."@` (иначе `` `t `` превращается в символ табуляции `` `	ext ``); название диалога обязано извлекаться из `conversation_summaries.db` и сохраняться в `.agents/HANDOFF.md`.
+19. Linux shell-скрипты (`.sh`, `S9*`) и Android KeyLayout (`.kl`, `.idc`) обязаны сохраняться строго в UTF-8 без BOM (проверяется правилом `SYNTAX-BOM` в `security-gate.ps1`), а выполненные рекомендации `[x] ВЫПОЛНЕНО` обязаны архивироваться в `docs/APPLIED_RECOMMENDATIONS.md` (правило `REC-001`).
 
 ## 5. История Изменений
+
+- 🛡️ **Чекпоинт** [2026-11-20 17:40:46] (метка: 2026-11-20_17-40-46): v1.8.0 Auto-Graphify, Dialog Title Preservation, Failure & Recommendation Gates
 
 - 🛡️ **Чекпоинт** [2026-11-18 21:25:28] (метка: 2026-11-18_21-25-28): Pre-v1.8.0 Audit, Dialog Title Preservation, Auto-Graphify & Failure/Recommendation Gates
 
@@ -225,6 +230,14 @@
 - **Чекпоинт**: Релиз v1.6.2 (Windows CLI UTF-8 Encoding & Firmware Checkpoint Separation).
 
 - 🛡️ **Чекпоинт** [2026-11-04 18:00:39] (метка: 2026-11-04_18-00-39): feat: record-failure subproject auto-detection and isolation
+### [2026-11-20 17:40]
+- **Что сделано**: Проведён полный аудит всех 35 проектов в `E:\Projects` и внедрён релиз **v1.8.0** (Auto-Graphify, Dialog Title Preservation, Failure & Recommendation Gates):
+  1. **Auto-Graphify в `checkpoint.ps1`**: устранены 3 бага, из-за которых `graphify-out/` отсутствовал в 31 из 35 проектов (убрано блокирующее условие `if (Test-Path $graphifyDir)`, добавлено `$ErrorActionPreference = "Continue"` вокруг вызова `python -m graphify`, генерация `.graphifyignore` и `.gitignore` перенесена ДО запуска Graphify).
+  2. **Сохранение названия диалога (`scripts/get_dialog_title.py`, `prepare-handoff.ps1`, `checkpoint.ps1`)**: автоматическое чтение `title` из `conversation_summaries.db`, вставка `Тема диалога: <Title>` первой строкой промпта, авто-синхронизация названия в БД при чекпоинте, исправление бага табуляции `` `	ext `` и парсинга `$recentChanges`.
+  3. **Исполняемые гейты ошибок и рекомендаций**: создан `scripts/add-recommendation.ps1`, в `record-failure.ps1` добавлен `-RecommendToSkill`, в `checkpoint.ps1` внедрены `FAIL-GUARD`, `REC-GUARD` и `Auto-Git-Init`, в `security-gate.ps1` добавлены правила `REC-001` и `SYNTAX-BOM`, в `doctor.ps1` добавлена диагностика `ERRORS_AND_FAILURES.md` и `AGENT_RECOMMENDATIONS.md`.
+  4. **Закрытие рекомендаций и обновление `SKILL.md`**: перенесены в `docs/APPLIED_RECOMMENDATIONS.md` все открытые рекомендации, в `SKILL.md` добавлены разделы 10.11–10.14 (быстрый поиск без `.backups`, коллизия `PROCS=python3` в Entware, `R"rawhtml(...)rawhtml"` в C++, правило BOM и Single Source of Truth для APK/бандлов).
+- **Чекпоинт**: Релиз v1.8.0.
+
 ### [2026-11-18 10:55]
 - **Что сделано**: Внедрен универсальный почтовый шлюз (Релиз v1.7.11):
   1. `scripts/send-email.py` и `scripts/send-email.ps1`: универсальный скрипт отправки писем с поддержкой вложений любого формата, HTML/текста и SSL/TLS (Mail.ru SMTP).

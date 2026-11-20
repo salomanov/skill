@@ -1,0 +1,92 @@
+{
+  "scripts/add-recommendation.ps1": {
+    "mtime": 1795178083.4257925,
+    "seen": 1795178453.7239816,
+    "ast_hash": "48a60fe694c089eb6270d0fde5e62305",
+    "semantic_hash": "48a60fe694c089eb6270d0fde5e62305"
+  },
+  "scripts/check-new-skills.ps1": {
+    "mtime": 1794635384.6144726,
+    "seen": 1795178453.723989,
+    "ast_hash": "b5b13f6babd37854d20dd0cc94b4b222",
+    "semantic_hash": "b5b13f6babd37854d20dd0cc94b4b222"
+  },
+  "scripts/checkpoint.ps1": {
+    "mtime": 1795178258.2944896,
+    "seen": 1795178453.7239928,
+    "ast_hash": "a961d1a54f998aef6cb224df94791b92",
+    "semantic_hash": "a961d1a54f998aef6cb224df94791b92"
+  },
+  "scripts/clean-backups.ps1": {
+    "mtime": 1793912332.350878,
+    "seen": 1795178453.7239952,
+    "ast_hash": "80e81ee55e81e00969bd4a5ef04b0183",
+    "semantic_hash": "80e81ee55e81e00969bd4a5ef04b0183"
+  },
+  "scripts/doctor.ps1": {
+    "mtime": 1795178261.670205,
+    "seen": 1795178453.7239969,
+    "ast_hash": "2c1d832cbf76a1a9841d42451435bbd6",
+    "semantic_hash": "2c1d832cbf76a1a9841d42451435bbd6"
+  },
+  "scripts/gen-env.ps1": {
+    "mtime": 1793912332.3518963,
+    "seen": 1795178453.7239988,
+    "ast_hash": "b3e3f72a08d707aabcf0f1ade0180e3a",
+    "semantic_hash": "b3e3f72a08d707aabcf0f1ade0180e3a"
+  },
+  "scripts/get_dialog_title.py": {
+    "mtime": 1795178080.0496387,
+    "seen": 1795178453.7240007,
+    "ast_hash": "68de9cb538873fdeb8e40ef7ec318b05",
+    "semantic_hash": "68de9cb538873fdeb8e40ef7ec318b05"
+  },
+  "scripts/install-skill.ps1": {
+    "mtime": 1794638819.2876692,
+    "seen": 1795178453.7240026,
+    "ast_hash": "3768d1da7fb27ad7ed3351b40d2f2b87",
+    "semantic_hash": "3768d1da7fb27ad7ed3351b40d2f2b87"
+  },
+  "scripts/new-scratch.ps1": {
+    "mtime": 1794042100.2689779,
+    "seen": 1795178453.724004,
+    "ast_hash": "a8a4362d6ace3e3729d92e27fa54587c",
+    "semantic_hash": "a8a4362d6ace3e3729d92e27fa54587c"
+  },
+  "scripts/prepare-handoff.ps1": {
+    "mtime": 1795178081.8830724,
+    "seen": 1795178453.724006,
+    "ast_hash": "85159aded81667e87017da6a1db60242",
+    "semantic_hash": "85159aded81667e87017da6a1db60242"
+  },
+  "scripts/record-failure.ps1": {
+    "mtime": 1795178085.4700072,
+    "seen": 1795178453.7240074,
+    "ast_hash": "e7b02c37ce10126af7ed739c86a9594e",
+    "semantic_hash": "e7b02c37ce10126af7ed739c86a9594e"
+  },
+  "scripts/rollback.ps1": {
+    "mtime": 1793912332.3534255,
+    "seen": 1795178453.7240095,
+    "ast_hash": "5b2de6ea133f0d85ba40ab1a8590e1c1",
+    "semantic_hash": "5b2de6ea133f0d85ba40ab1a8590e1c1"
+  },
+  "scripts/security-gate.ps1": {
+    "mtime": 1795178259.965878,
+    "seen": 1795178453.724011,
+    "ast_hash": "f676b71cb369d562d2b595aefb50a8a3",
+    "semantic_hash": "f676b71cb369d562d2b595aefb50a8a3"
+  },
+  "scripts/send-email.ps1": {
+    "mtime": 1794981483.1924195,
+    "seen": 1795178453.7240126,
+    "ast_hash": "716cc34c9383114282d8d8d373b33fd9",
+    "semantic_hash": "716cc34c9383114282d8d8d373b33fd9"
+  },
+  "scripts/send-email.py": {
+    "mtime": 1794981473.320469,
+    "seen": 1795178453.724014,
+    "ast_hash": "b72ccb1b66380c822643f878365b0af6",
+    "semantic_hash": "b72ccb1b66380c822643f878365b0af6"
+  }
+}

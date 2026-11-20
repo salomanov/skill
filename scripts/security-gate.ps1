@@ -3,8 +3,9 @@
     Executable security & reliability gate for any project.
 .DESCRIPTION
     Scans tracked (and new untracked) files for leaked secrets, disabled security
-    controls, dangerous installer patterns and syntax errors. Returns exit code 1
-    if anything unexcused is found, so it can gate a commit or CI step.
+    controls, dangerous installer patterns, syntax errors, UTF-8 BOM violations
+    in Linux/Android files (SYNTAX-BOM), and unarchived recommendations (REC-001).
+    Returns exit code 1 if anything unexcused is found, so it can gate a commit or CI step.
 
     Deliberate exceptions go into "<repo>/.security-gate-allow", one rule-id or
     literal substring per line, with a reason after '#'. Excused findings are
@@ -12,7 +13,7 @@
 .PARAMETER ProjectPath
     Project (or repository) directory. Defaults to the current location.
 .PARAMETER SkipSyntax
-    Skip py_compile / node --check / sh -n / ps1 AST.
+    Skip py_compile / node --check / sh -n / ps1 AST / BOM checks.
 .PARAMETER CheckLinks
     Additionally verify that URLs referenced in README/docs answer HTTP 200.
     Off by default: it needs network access.
@@ -53,7 +54,6 @@ function Get-ActiveSessionStepCount {
 
     $brainRoot = Join-Path $HOME '.gemini/antigravity/brain'
 
-    # Если ID не определен через env или параметр, проверяем свежие файлы (не директории!) за последние 60 сек
     if (-not $resolvedId) {
         if (Test-Path -LiteralPath $brainRoot -PathType Container) {
             $cutoff = (Get-Date).AddSeconds(-60)
@@ -116,8 +116,8 @@ $activeSteps = Get-ActiveSessionStepCount -TargetConversationId $ConversationId
 # --- Locate project root and file list -----------------------------------
 
 $scanDir = $ProjectPath
-if ($ProjectPath -and (Test-Path $ProjectPath)) {
-    $scanDir = (Resolve-Path $ProjectPath).Path
+if ($ProjectPath -and (Test-Path -LiteralPath $ProjectPath)) {
+    $scanDir = (Resolve-Path -LiteralPath $ProjectPath).Path
 }
 
 $root = $scanDir
@@ -131,18 +131,17 @@ try {
     }
 } catch { }
 
-$skipDir = '[\\/](\.git|\.backups|node_modules|graphify-out|__pycache__|dist|build|venv|\.venv|scratch)[\\/]'
+$skipDir = '(^|[\\/])(\.git|\.backups|node_modules|graphify-out|__pycache__|dist|build|venv|\.venv|scratch)[\\/]'
 
 $binaryExt = @('.png', '.jpg', '.jpeg', '.gif', '.ico', '.zip', '.gz', '.ipk', '.bin', '.hex',
                '.elf', '.pyc', '.pdf', '.woff', '.woff2', '.ttf', '.so', '.dll', '.exe', '.apk')
 
 function Get-ProjectFiles {
     if ($isGit) {
-        # Если мы сканируем подпроект внутри общего git-репозитория, берём файлы строго относительно scanDir
         $files = & git -C $scanDir ls-files --cached --others --exclude-standard . 2>$null
         return @($files | Where-Object { $_ -and $_ -notmatch $skipDir })
     }
-    return @(Get-ChildItem -Path $scanDir -Recurse -File -ErrorAction SilentlyContinue |
+    return @(Get-ChildItem -LiteralPath $scanDir -Recurse -File -ErrorAction SilentlyContinue |
         Where-Object { $_.FullName -notmatch $skipDir } |
         ForEach-Object { $_.FullName.Substring($scanDir.Length).TrimStart('\', '/') })
 }
@@ -152,7 +151,6 @@ Write-Host "[gate] project: $scanDir ($($files.Count) files)" -ForegroundColor C
 
 # --- Rule definitions ---------------------------------------------------
 
-# type: secret | anti | syntax
 $rules = @(
     @{ Id = 'SEC-001'; Type = 'secret'; Glob = '*'; Pattern = '(?i)(?<![/\\.\w-])Salomanov(?![/\\.\w-])'
        Message = 'known leaked credential literal (not part of a URL/domain/path)' },
@@ -199,13 +197,13 @@ $secretFileNames = @('\.env$', '\.env\.[a-z]+$', '\.pem$', '\.pfx$', '\.p12$',
 # --- Allowlist ----------------------------------------------------------
 
 $allowFile = Join-Path $scanDir '.security-gate-allow'
-if (-not (Test-Path $allowFile) -and $gitRoot) {
+if (-not (Test-Path -LiteralPath $allowFile) -and $gitRoot) {
     $allowFile = Join-Path $gitRoot '.security-gate-allow'
 }
 
 $allow = @()
-if (Test-Path $allowFile) {
-    foreach ($line in Get-Content $allowFile -Encoding UTF8) {
+if (Test-Path -LiteralPath $allowFile) {
+    foreach ($line in Get-Content -LiteralPath $allowFile -Encoding UTF8) {
         $trimmed = $line.Trim()
         if (-not $trimmed -or $trimmed.StartsWith('#')) { continue }
         $reason = ''
@@ -235,10 +233,8 @@ $excused = @()
 foreach ($name in $files) {
     $ext = [System.IO.Path]::GetExtension($name).ToLowerInvariant()
     if ($binaryExt -contains $ext) { continue }
-    # The scanner itself contains the patterns it looks for
     if ($name -like '*security-gate.ps1') { continue }
 
-    # Template files (.example, .sample, .template) are safe and expected in git
     if ($name -like '*.example' -or $name -like '*.sample' -or $name -like '*.template') {
         # skip filename secrets check for templates
     } else {
@@ -259,7 +255,7 @@ foreach ($name in $files) {
     $full = Join-Path $scanDir $name
     if (-not (Test-Path -LiteralPath $full -PathType Leaf)) { continue }
     try {
-        if ((Get-Item $full).Length -gt 1MB) { continue }
+        if ((Get-Item -LiteralPath $full).Length -gt 1MB) { continue }
         $content = [System.IO.File]::ReadAllText($full, [System.Text.Encoding]::UTF8)
     } catch { continue }
     if (-not $content) { continue }
@@ -290,7 +286,41 @@ foreach ($name in $files) {
     }
 }
 
-# --- Syntax checks ------------------------------------------------------
+# --- REC-001: Recommendations Hygiene & Failure Log Status --------------
+$recFile = Join-Path $scanDir 'AGENT_RECOMMENDATIONS.md'
+$openRecCount = 0
+if (Test-Path -LiteralPath $recFile -PathType Leaf) {
+    try {
+        $recLines = [System.IO.File]::ReadAllLines($recFile, [System.Text.Encoding]::UTF8)
+        for ($i = 0; $i -lt $recLines.Length; $i++) {
+            $rl = $recLines[$i]
+            if ($rl -match '\[ \]\s*ТРЕБУЕТ ВНЕДРЕНИЯ') {
+                $openRecCount++
+            }
+            if ($rl -match '\[x\]\s*ВЫПОЛНЕНО') {
+                $entry = [pscustomobject]@{
+                    Id = 'REC-001'; File = 'AGENT_RECOMMENDATIONS.md'; Line = ($i + 1)
+                    Text = $rl.Trim(); Message = 'completed [x] items in AGENT_RECOMMENDATIONS.md must be archived to docs/APPLIED_RECOMMENDATIONS.md'
+                }
+                $why = Test-Excused 'REC-001' $rl
+                if ($why) { $entry | Add-Member -NotePropertyName Reason -NotePropertyValue $why.Reason
+                            $excused += $entry } else { $findings += $entry }
+            }
+        }
+    } catch {}
+}
+
+if ($openRecCount -gt 0) {
+    Write-Host "[gate] 📌 AGENT_RECOMMENDATIONS.md: $openRecCount открытых рекомендаций ([ ] ТРЕБУЕТ ВНЕДРЕНИЯ)" -ForegroundColor Yellow
+}
+
+$errLog1 = Join-Path $scanDir 'docs\ERRORS_AND_FAILURES.md'
+$errLog2 = Join-Path $scanDir 'ERRORS_AND_FAILURES.md'
+if (-not (Test-Path -LiteralPath $errLog1) -and -not (Test-Path -LiteralPath $errLog2)) {
+    Write-Host "[gate] ℹ️ База ошибок docs/ERRORS_AND_FAILURES.md отсутствует (создавайте через record-failure.ps1 при первом сбое)" -ForegroundColor DarkYellow
+}
+
+# --- Syntax & BOM checks ------------------------------------------------
 
 $syntaxFailures = @()
 
@@ -298,12 +328,25 @@ if (-not $SkipSyntax) {
     $python = Get-Command python -ErrorAction SilentlyContinue
     $node = Get-Command node -ErrorAction SilentlyContinue
     $bashSh = @("C:\Program Files\Git\bin\sh.exe", "C:\Program Files\Git\usr\bin\sh.exe") |
-        Where-Object { Test-Path $_ } | Select-Object -First 1
+        Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
 
     foreach ($name in $files) {
         $full = Join-Path $scanDir $name
         if (-not (Test-Path -LiteralPath $full -PathType Leaf)) { continue }
         $ext = [System.IO.Path]::GetExtension($name).ToLowerInvariant()
+
+        # SYNTAX-BOM: запрет UTF-8 BOM в Linux shell (.sh, S9*) и Android (.kl, .idc)
+        if ($ext -in @('.sh', '.kl', '.idc') -or $name -match '(^|/|\\)S\d{2}') {
+            try {
+                $stream = [System.IO.File]::OpenRead($full)
+                $hdr = New-Object byte[] 3
+                $read = $stream.Read($hdr, 0, 3)
+                $stream.Dispose()
+                if ($read -eq 3 -and $hdr[0] -eq 0xEF -and $hdr[1] -eq 0xBB -and $hdr[2] -eq 0xBF) {
+                    $syntaxFailures += "bom: $name (UTF-8 BOM breaks Linux shebangs and Android .kl/.idc parsers; save as UTF-8 without BOM)"
+                }
+            } catch {}
+        }
 
         if ($ext -eq '.py' -and $python) {
             & $python.Source -m py_compile $full 2>&1 | Out-Null
@@ -328,7 +371,7 @@ if (-not $SkipSyntax) {
         elseif (($ext -eq '.sh' -or $name -match '(^|/)S\d{2}') -and $bashSh) {
             if ($name -match '(^|/)S\d{2}') {
                 try {
-                    $head = Get-Content $full -TotalCount 1 -Encoding UTF8
+                    $head = Get-Content -LiteralPath $full -TotalCount 1 -Encoding UTF8
                     if ($head -notmatch 'sh') { continue }
                 } catch { continue }
             }

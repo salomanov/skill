@@ -2,6 +2,35 @@
 
 All notable changes to Project Guardian are documented in this file.
 
+## v1.8.0 - 2026-11-20
+
+### Added
+- **Auto-Graphify Initialization & PowerShell 5.1 Reliability (`scripts/checkpoint.ps1`)**:
+  - Устранена ловушка `if (Test-Path $graphifyDir)`: теперь `checkpoint.ps1` автоматически инициализирует `graphify-out/` (`graphify extract --code-only`) при первом чекпоинте, если графа ещё нет, и обновляет через `graphify update`, если он уже существует.
+  - Временное переключение `$ErrorActionPreference = "Continue"` вокруг вызова `python -m graphify` исключает ложный крах `NativeCommandError` на выводе `stderr` в Windows PowerShell 5.1.
+  - Автоматическая генерация `.graphifyignore` и добавление `.backups/` / `scratch/` в `.gitignore` выполняются ДО запуска Graphify.
+- **Dialog Title Preservation (`scripts/get_dialog_title.py`, `prepare-handoff.ps1`, `checkpoint.ps1`)**:
+  - `prepare-handoff.ps1` автоматически считывает название текущего диалога из `conversation_summaries.db` (или наследует из `.agents/HANDOFF.md`) и подставляет `Тема диалога: <Title>` первой строкой промпта.
+  - `checkpoint.ps1` автоматически восстанавливает чистое название нового диалога в `conversation_summaries.db`, если оно было сгенерировано как техническое.
+- **Failure & Recommendation Executable Guardrails (`scripts/add-recommendation.ps1`, `record-failure.ps1`, `security-gate.ps1`, `doctor.ps1`)**:
+  - Создан генератор межпроектных рекомендаций `scripts/add-recommendation.ps1` (поддерживает `-ToSkill`).
+  - В `record-failure.ps1` добавлены флаги `-RecommendToSkill` и `-RecommendToProject`.
+  - В `checkpoint.ps1` внедрены `FAIL-GUARD` (контроль обновления `docs/ERRORS_AND_FAILURES.md` при багфиксах), `REC-GUARD` (напоминание об открытых рекомендациях) и `Auto-Git-Init` (автоматический `git init` для одиночных проектов без `.git`).
+  - В `security-gate.ps1` внедрены проверки `REC-001` (запрет неархивированных `[x] ВЫПОЛНЕНО` в `AGENT_RECOMMENDATIONS.md`) и `SYNTAX-BOM` (запрет UTF-8 BOM в Linux `.sh`/`S9*` и Android `.kl`/`.idc`).
+  - В `doctor.ps1` добавлена диагностика `docs/ERRORS_AND_FAILURES.md` и `AGENT_RECOMMENDATIONS.md`.
+- **Новые инженерные инварианты в `SKILL.md` (Раздел 10.11–10.14)**:
+  - Быстрый поиск без зависаний на `.backups` (`graphify` / `git ls-files`).
+  - Защита от коллизии `PROCS=python3` в Entware `rc.func`.
+  - Именованные сырые строки C++ (`R"rawhtml(...)rawhtml"`) и безопасный поиск ключей JSON.
+  - Правило UTF-8 BOM vs No-BOM и Single Source of Truth при патчинге бандлов/APK.
+
+### Fixed
+- Исправлен баг `` `	ext `` (превращение `` `t `` в табуляцию внутри `@"..."@`) в `prepare-handoff.ps1`.
+- Исправлен парсинг `$recentChanges` в `prepare-handoff.ps1` (извлекается суть последнего чекпоинта, а не голая дата).
+- Закрыты и перенесены в `docs/APPLIED_RECOMMENDATIONS.md` все открытые рекомендации из `AGENT_RECOMMENDATIONS.md`.
+
+---
+
 ## v1.7.11 - 2026-11-18
 
 ### Added

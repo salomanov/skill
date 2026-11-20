@@ -5,7 +5,7 @@
     Записывает ошибку в docs/ERRORS_AND_FAILURES.md, запускает graphify для обновления
     графа знаний, создает защитную контрольную точку в .backups и коммитит локально.
     В составных воркспейсах автоматически изолирует запись в целевой подпроект.
-    Пуш в remote не выполняется (только явным -Push у checkpoint.ps1).
+    При передаче -RecommendToSkill автоматически добавляет рекомендацию в E:\Projects\Skill\AGENT_RECOMMENDATIONS.md.
 .PARAMETER Title
     Краткое название сбоя/ошибки.
 .PARAMETER Symptom
@@ -20,6 +20,10 @@
     Явное указание подпроекта в составном воркспейсе / монорепозитории.
 .PARAMETER NoCheckpoint
     Не запускать автоматический checkpoint после записи.
+.PARAMETER RecommendToSkill
+    Автоматически продублировать этот урок как рекомендацию [ ] ТРЕБУЕТ ВНЕДРЕНИЯ в E:\Projects\Skill\AGENT_RECOMMENDATIONS.md.
+.PARAMETER RecommendToProject
+    Автоматически продублировать рекомендацию в указанный внешний проект.
 #>
 
 param(
@@ -44,6 +48,12 @@ param(
     [Parameter(Mandatory=$false)]
     [switch]$NoCheckpoint,
 
+    [Parameter(Mandatory=$false)]
+    [switch]$RecommendToSkill,
+
+    [Parameter(Mandatory=$false)]
+    [string]$RecommendToProject = "",
+
     [Parameter(ValueFromRemainingArguments=$true)]
     [string[]]$ExtraArgs
 )
@@ -53,7 +63,6 @@ $env:PYTHONIOENCODING = "utf-8"
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
-# Нормализация текстовых аргументов: поддержка пробелов и вызовов без кавычек
 if ($ExtraArgs) {
     $allTitle = @($Title) + @($ExtraArgs)
     $Title = ($allTitle -join " ").Trim()
@@ -65,29 +74,27 @@ if ($RootCause -is [array]) { $RootCause = ($RootCause -join " ").Trim() }
 if ($Solution -is [array]) { $Solution = ($Solution -join " ").Trim() }
 
 # 0. Нормализация пути и автоопределение подпроекта в составных воркспейсах
-if ($ProjectPath -and (Test-Path $ProjectPath)) {
-    $ProjectPath = (Resolve-Path $ProjectPath).Path
+if ($ProjectPath -and (Test-Path -LiteralPath $ProjectPath)) {
+    $ProjectPath = (Resolve-Path -LiteralPath $ProjectPath).Path
 }
 
 if ($SubProject) {
     $candidateSub = Join-Path $ProjectPath $SubProject
-    if (Test-Path $candidateSub) {
-        $ProjectPath = (Resolve-Path $candidateSub).Path
+    if (Test-Path -LiteralPath $candidateSub) {
+        $ProjectPath = (Resolve-Path -LiteralPath $candidateSub).Path
         Write-Host "[Project Guardian] 🎯 Выбран подпроект: $ProjectPath" -ForegroundColor Cyan
     } else {
         Write-Warning "Указанный подпроект '$SubProject' не найден в $ProjectPath"
     }
 } else {
-    # Проверяем, является ли $ProjectPath контейнером нескольких подпроектов (каждый со своим PROJECT_STATE.md)
-    $subProjects = @(Get-ChildItem -Path $ProjectPath -Directory -ErrorAction SilentlyContinue | Where-Object {
-        $_.Name -notmatch '^(\.git|\.backups|node_modules|\.venv|venv|scratch)$' -and
-        (Test-Path (Join-Path $_.FullName "PROJECT_STATE.md"))
+    $subProjects = @(Get-ChildItem -LiteralPath $ProjectPath -Directory -ErrorAction SilentlyContinue | Where-Object {
+        $_.Name -notmatch '^(\.git|\.backups|node_modules|\.venv|venv|scratch|graphify-out)$' -and
+        (Test-Path -LiteralPath (Join-Path $_.FullName "PROJECT_STATE.md"))
     })
 
     if ($subProjects.Count -gt 0) {
         $detectedSub = $null
 
-        # 1. Поиск по упоминанию имени подпроекта в названии или описании сбоя
         foreach ($sp in $subProjects) {
             $spName = $sp.Name
             if ($Title -match "(?i)\b$spName\b" -or $Symptom -match "(?i)\b$spName\b" -or $RootCause -match "(?i)\b$spName\b") {
@@ -96,14 +103,13 @@ if ($SubProject) {
             }
         }
 
-        # 2. Поиск по упоминаемым именам файлов (.py, .js, .ts, .sh, .cs, .php, .html, .json)
         if (-not $detectedSub) {
             $fileMatches = [regex]::Matches("$Title $Symptom $RootCause $Solution", '([A-Za-z0-9_-]+\.(?:py|js|ts|sh|cs|php|html|css|json|ino|cpp|h))')
             if ($fileMatches.Count -gt 0) {
                 $mentionedFiles = $fileMatches | ForEach-Object { $_.Groups[1].Value } | Select-Object -Unique
                 foreach ($sp in $subProjects) {
                     foreach ($mf in $mentionedFiles) {
-                        if (Test-Path (Join-Path $sp.FullName $mf)) {
+                        if (Test-Path -LiteralPath (Join-Path $sp.FullName $mf)) {
                             $detectedSub = $sp.FullName
                             break
                         }
@@ -113,7 +119,6 @@ if ($SubProject) {
             }
         }
 
-        # 3. Поиск по незакоммиченным файлам в Git
         if (-not $detectedSub) {
             try {
                 $gitStatus = & git -C $ProjectPath status --porcelain 2>$null
@@ -157,13 +162,12 @@ Write-Host "Ошибка: $Title"
 $docsDir = Join-Path $ProjectPath "docs"
 $errorFile = Join-Path $docsDir "ERRORS_AND_FAILURES.md"
 
-if (-not (Test-Path $errorFile)) {
-    # Проверяем в корне
+if (-not (Test-Path -LiteralPath $errorFile)) {
     $rootErrorFile = Join-Path $ProjectPath "ERRORS_AND_FAILURES.md"
-    if (Test-Path $rootErrorFile) {
+    if (Test-Path -LiteralPath $rootErrorFile) {
         $errorFile = $rootErrorFile
     } else {
-        if (-not (Test-Path $docsDir)) {
+        if (-not (Test-Path -LiteralPath $docsDir)) {
             New-Item -ItemType Directory -Path $docsDir -Force | Out-Null
         }
         $header = "# База знаний ошибок, граблей и неудачных экспериментов (FAILURE LOG)`n> **Назначение файла**: Полный реестр всех ошибочных решений, тупиковых гипотез и проверенных антипаттернов.`n> **Правило разработчика**: ПЕРЕД любым изменением пинов, регистров или архитектуры ОБЯЗАТЕЛЬНО свериться с этим файлом!`n`n---`n`n"
@@ -179,10 +183,22 @@ $entry = "`n---`n`n### [Инцидент $timestamp] $Title`n- **Симптом 
 [System.IO.File]::AppendAllText($errorFile, $entry, [System.Text.Encoding]::UTF8)
 Write-Host "[OK] Инцидент зафиксирован в $errorFile" -ForegroundColor Green
 
+# 2.5. Автоматическая отправка рекомендации в Skill или целевой проект (если запрошено)
+$addRecScript = Join-Path $PSScriptRoot "add-recommendation.ps1"
+$sourceName = Split-Path $ProjectPath -Leaf
+if ($RecommendToSkill -and (Test-Path -LiteralPath $addRecScript)) {
+    & $addRecScript -ToSkill -SourceProject $sourceName -Title $Title -Problem "$Symptom. Причина: $RootCause" -Solution $Solution
+} elseif ($RecommendToProject -and (Test-Path -LiteralPath $addRecScript)) {
+    & $addRecScript -TargetProject $RecommendToProject -SourceProject $sourceName -Title $Title -Problem "$Symptom. Причина: $RootCause" -Solution $Solution
+} else {
+    Write-Host "[Подсказка] Если этот сбой выявил системное правило для скилла Project Guardian, передайте -RecommendToSkill или выполните:" -ForegroundColor DarkYellow
+    Write-Host "  & `"$addRecScript`" -ToSkill -Title `"$Title`" -Problem `"$RootCause`" -Solution `"$Solution`"" -ForegroundColor Gray
+}
+
 # 3. Автоматический запуск чекпоинта и актуализация graphify
 if (-not $NoCheckpoint) {
     $checkpointScript = Join-Path $PSScriptRoot "checkpoint.ps1"
-    if (Test-Path $checkpointScript) {
+    if (Test-Path -LiteralPath $checkpointScript) {
         Write-Host "`n[Project Guardian] Запуск авто-чекпоинта и актуализации graphify..." -ForegroundColor Cyan
         & $checkpointScript -ProjectPath $ProjectPath -Message "failure: $Title"
     } else {

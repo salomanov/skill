@@ -1,0 +1,208 @@
+{
+  "communities": {
+    "0": [
+      "scripts_get_dialog_title",
+      "scripts_get_dialog_title_clean_title",
+      "scripts_get_dialog_title_get_dialog_title",
+      "scripts_get_dialog_title_is_generic_title",
+      "scripts_get_dialog_title_main",
+      "scripts_get_dialog_title_match_workspace",
+      "scripts_get_dialog_title_normalize_uri_path",
+      "scripts_get_dialog_title_set_dialog_title",
+      "sqlite3",
+      "urllib_parse"
+    ],
+    "1": [
+      "email",
+      "email_header",
+      "email_mime_base",
+      "email_mime_multipart",
+      "email_mime_text",
+      "os",
+      "pathlib",
+      "scripts_send_email_py_scripts_send_email",
+      "scripts_send_email_rationale_3"
+    ],
+    "2": [
+      "scripts_security_gate",
+      "scripts_security_gate_get_activesessionstepcount",
+      "scripts_security_gate_get_projectfiles",
+      "scripts_security_gate_test_excused"
+    ],
+    "3": [
+      "argparse",
+      "scripts_send_email_main",
+      "sys"
+    ],
+    "4": [
+      "mimetypes",
+      "scripts_send_email_send_email",
+      "smtplib"
+    ],
+    "5": [
+      "json",
+      "scripts_send_email_load_config"
+    ],
+    "6": [
+      "scripts_checkpoint",
+      "scripts_checkpoint_get_activesessionstepcount"
+    ],
+    "7": [
+      "scripts_doctor",
+      "scripts_doctor_report_item"
+    ],
+    "8": [
+      "scripts_install_skill",
+      "scripts_install_skill_download_githubdirectory"
+    ],
+    "9": [
+      "scripts_add_recommendation"
+    ],
+    "10": [
+      "scripts_check_new_skills"
+    ],
+    "11": [
+      "scripts_clean_backups"
+    ],
+    "12": [
+      "scripts_gen_env"
+    ],
+    "13": [
+      "scripts_new_scratch"
+    ],
+    "14": [
+      "scripts_prepare_handoff"
+    ],
+    "15": [
+      "scripts_record_failure"
+    ],
+    "16": [
+      "scripts_rollback"
+    ],
+    "17": [
+      "scripts_send_email_ps1_scripts_send_email"
+    ]
+  },
+  "cohesion": {
+    "0": 0.4666666666666667,
+    "1": 0.2222222222222222,
+    "2": 0.5,
+    "3": 0.6666666666666666,
+    "4": 0.6666666666666666,
+    "5": 1.0,
+    "6": 1.0,
+    "7": 1.0,
+    "8": 1.0,
+    "9": 1.0,
+    "10": 1.0,
+    "11": 1.0,
+    "12": 1.0,
+    "13": 1.0,
+    "14": 1.0,
+    "15": 1.0,
+    "16": 1.0,
+    "17": 1.0
+  },
+  "gods": [
+    {
+      "id": "scripts_get_dialog_title_get_dialog_title",
+      "label": "get_dialog_title()",
+      "degree": 6
+    },
+    {
+      "id": "scripts_get_dialog_title_set_dialog_title",
+      "label": "set_dialog_title()",
+      "degree": 6
+    },
+    {
+      "id": "scripts_get_dialog_title_match_workspace",
+      "label": "match_workspace()",
+      "degree": 5
+    },
+    {
+      "id": "scripts_get_dialog_title_main",
+      "label": "main()",
+      "degree": 5
+    },
+    {
+      "id": "scripts_send_email_send_email",
+      "label": "send_email()",
+      "degree": 5
+    },
+    {
+      "id": "scripts_get_dialog_title_clean_title",
+      "label": "clean_title()",
+      "degree": 4
+    },
+    {
+      "id": "scripts_send_email_main",
+      "label": "main()",
+      "degree": 4
+    },
+    {
+      "id": "scripts_get_dialog_title_is_generic_title",
+      "label": "is_generic_title()",
+      "degree": 3
+    },
+    {
+      "id": "scripts_send_email_load_config",
+      "label": "load_config()",
+      "degree": 3
+    },
+    {
+      "id": "scripts_get_dialog_title_normalize_uri_path",
+      "label": "normalize_uri_path()",
+      "degree": 2
+    }
+  ],
+  "surprises": [
+    {
+      "source": "match_workspace()",
+      "target": "json",
+      "source_files": [
+        "scripts/get_dialog_title.py",
+        ""
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "note": "Bridges community 0 \u2192 community 5"
+    },
+    {
+      "source": "main()",
+      "target": "argparse",
+      "source_files": [
+        "scripts/get_dialog_title.py",
+        ""
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "note": "Bridges community 0 \u2192 community 3"
+    },
+    {
+      "source": "send_email()",
+      "target": "load_config()",
+      "source_files": [
+        "scripts/send-email.py",
+        "scripts/send-email.py"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "note": "Bridges community 5 \u2192 community 4"
+    },
+    {
+      "source": "main()",
+      "target": "send_email()",
+      "source_files": [
+        "scripts/send-email.py",
+        "scripts/send-email.py"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "note": "Bridges community 4 \u2192 community 3"
+    }
+  ],
+  "tokens": {
+    "input": 0,
+    "output": 0
+  }
+}
