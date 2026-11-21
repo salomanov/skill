@@ -635,6 +635,66 @@ TDD обязателен для любых изменений, затрагив�
 3. Список прикрепленных файлов (если были вложения).
 4. Статус отправки (exit code 0 / [OK]).
 
+---
+
+## 20. Единый консольный фасад `guardian.ps1` (Project Guardian CLI v2.0)
+
+Начиная с версии `v2.0`, Project Guardian предоставляет единый интерфейс вызова для всех утилит проекта через фасад `guardian.ps1`, доступный как из корня проекта (`./guardian.ps1`), так и из каталога скриптов (`./scripts/guardian.ps1`).
+
+### 20.1. Автоматическое определение путей
+Скрипт автоматически находит каталог `scripts/` по цепочке приоритетов:
+1. Каталог `scripts/` рядом с вызываемым скриптом (`Join-Path $PSScriptRoot 'scripts'`).
+2. Текущий каталог скрипта (`$PSScriptRoot`), если скрипт запущен из `scripts/`.
+3. Каталог `scripts/` в корне Git-репозитория (`git rev-parse --show-toplevel`).
+4. Глобальный каталог установки скилла (`~/.gemini/config/skills/project-guardian/scripts`).
+5. Каталог `scripts/` в текущей рабочей директории (`(Get-Location).Path`).
+
+### 20.2. Таблица команд и алиасов
+
+```powershell
+./guardian.ps1 <команда> [параметры...]
+```
+
+| Команда | Алиасы | Целевой скрипт | Назначение |
+| :--- | :--- | :--- | :--- |
+| `checkpoint` | `cp` | `scripts/checkpoint.ps1` | Чекпоинт кода, бэкап релизов (`-Release`), прошивок (`-Firmware`), авто-коммит (`-Push`) |
+| `doctor` | `doc` | `scripts/doctor.ps1` | 1-кликовая экспресс-диагностика окружения, Git, памяти и запуск Security Gate |
+| `gate` | `security`, `sec` | `scripts/security-gate.ps1` | Исполняемый Security Gate: секреты, синтаксис AST, BOM, инварианты |
+| `test` | `tests` | `scripts/run-tests.ps1` | Универсальный раннер тестов с Auto-Ensure для pytest / unittest / npm |
+| `rollback` | `rb` | `scripts/rollback.ps1` | Менеджер отката к контрольной точке или просмотр списка (`-List`) |
+| `failure` | `record`, `fail` | `scripts/record-failure.ps1` | Немедленная фиксация инцидента в `docs/ERRORS_AND_FAILURES.md` |
+| `handoff` | — | `scripts/prepare-handoff.ps1` | Подготовка контекста для передачи сессии в новый диалог (`.agents/HANDOFF.md`) |
+| `scratch` | — | `scripts/new-scratch.ps1` | Безопасный генератор scratch-скриптов с гарантией UTF-8 и учетных данных |
+| `clean` | — | `scripts/clean-backups.ps1` | Безопасная ротация промежуточных бэкапов с защитой несгораемых релизов |
+| `env` | — | `scripts/gen-env.ps1` | Сканирование вызовов переменных окружения и сборка `.env.example` |
+| `install` | — | `scripts/install-skill.ps1` | Автономный загрузчик/обновитель скиллов из каталога Agentic Awesome Skills |
+| `check-skills` | — | `scripts/check-new-skills.ps1` | Мониторинг поступлений новых скиллов и обновлений в апстриме |
+| `recommend` | — | `scripts/add-recommendation.ps1` | Добавление межпроектных рекомендаций (`AGENT_RECOMMENDATIONS.md`) |
+| `email` | — | `scripts/send-email.ps1` | Универсальный шлюз отправки отчетов и файлов на email |
+
+### 20.3. Примеры вызова
+
+```powershell
+# Чекпоинт перед правками
+./guardian.ps1 checkpoint "Рефакторинг фасада"
+
+# Экспресс-диагностика проекта
+./guardian.ps1 doctor
+
+# Проверка безопасности и синтаксиса
+./guardian.ps1 gate
+
+# Запуск тестов
+./guardian.ps1 test
+
+# Фиксация сбоя
+./guardian.ps1 failure -Title "Crash" -Symptom "Краш" -RootCause "OOM" -Solution "Swap"
+
+# Просмотр точек отката
+./guardian.ps1 rollback -List
+```
+
+
 
 
 

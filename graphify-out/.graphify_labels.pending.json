@@ -16,5 +16,8 @@
   "14": "prepare-handoff.ps1",
   "15": "record-failure.ps1",
   "16": "rollback.ps1",
-  "17": "send-email.ps1"
+  "17": "send-email.ps1",
+  "18": "test_guardian.py",
+  "19": "guardian.ps1",
+  "20": "scripts/guardian.ps1"
 }

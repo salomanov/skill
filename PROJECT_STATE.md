@@ -3,9 +3,9 @@
 > Данный файл автоматически ведется агентом и служит долговременной памятью проекта.
 > При начале новой сессии агент считывает этот файл в первую очередь.
 
-- **Версия**: `v1.8.0` (Auto-Graphify, Dialog Title Preservation, Failure & Recommendation Gates)
-- **Статус**: Активен, Auto-Graphify & Execution Guardrails Enforced
-- **Дата обновления**: 2026-11-20
+- **Версия**: `v2.0.0` (Project Guardian CLI Facade Consolidation)
+- **Статус**: Активен, Guardian CLI Facade v2.0 Operational & TDD Verified
+- **Дата обновления**: 2026-11-21
 
 
 ---
@@ -34,10 +34,13 @@
 ## 3. Архитектура и Структура Репозитория
 ```text
 /
+├── guardian.ps1                      # Единый консольный фасад CLI Project Guardian
 ├── SKILL.md                          # Универсальный манифест скилла
 ├── scripts/
+│   ├── guardian.ps1                  # Идентичный фасад CLI внутри каталога скриптов
 │   ├── checkpoint.ps1                # Чекпоинты, бэкапы веб-релизов, десктоп-сборок (.exe), прошивок (-SubProject, -Verify)
 │   ├── doctor.ps1                    # Экспресс-диагностика окружения, рантаймов, Git и подпроектов
+│   ├── run-tests.ps1                 # Авто-раннер тестов с Auto-Ensure (pytest/unittest/npm)
 │   ├── prepare-handoff.ps1           # Генерация ультракомпактного контекста (.agents/HANDOFF.md)
 │   ├── clean-backups.ps1             # Безопасная ротация промежуточных бэкапов (-DryRun)
 │   ├── gen-env.ps1                   # Сканер кодовой базы и генератор шаблона .env.example
@@ -45,11 +48,17 @@
 │   ├── record-failure.ps1            # Фиксация инцидентов в docs/ERRORS_AND_FAILURES.md (-SubProject, автоопределение)
 │   ├── rollback.ps1                  # Менеджер отката с просмотром точек (-List) и детекцией новых файлов
 │   ├── new-scratch.ps1               # Безопасный генератор scratch-скриптов (UTF-8, авто-подтягивание SSH/API кредов)
-│   └── install-skill.ps1             # Автономный загрузчик скиллов из GitHub (с токеном и $HOME)
+│   ├── install-skill.ps1             # Автономный загрузчик скиллов из GitHub (с токеном и $HOME)
+│   ├── check-new-skills.ps1          # Сканер свежих поступлений скиллов в апстриме
+│   ├── add-recommendation.ps1        # Генератор рекомендаций для внешних проектов
+│   └── send-email.ps1                # Универсальный почтовый шлюз (SSL/TLS, вложения)
+├── tests/
+│   └── test_guardian.py              # Автотесты фасада guardian.ps1 (pytest/unittest)
 ├── references/
 │   └── PROJECT_STATE_TEMPLATE.md     # Универсальный шаблон памяти проекта
 ├── .gitignore
 ├── PROJECT_STATE.md                  # Память проекта
+├── CHANGELOG.md
 └── README.md
 ```
 
@@ -96,6 +105,14 @@
   - В `new-scratch.ps1` добавлена подсказка-напоминание по работе с Dropbear SSH (запрет `open_sftp()`, передача через `cat > path`).
   - В `SKILL.md` (разделы 10.9, 10.10) и `AGENTS.md` добавлены правила по Windows CRLF vs LF для `edit_file` и безопасному использованию `-LiteralPath`.
 
+- [x] **v1.8.1**: Auto-Ensure Test Runner (`scripts/run-tests.ps1`) с автоустановкой `pytest` и фоллбэком на `unittest discover`.
+- [x] **v2.0.0**: Consolidation Suite — Единый CLI-фасад `guardian.ps1` (в корне и в `scripts/guardian.ps1`):
+  - Консолидация всех утилит проекта в единую команду с поддержкой алиасов (`checkpoint|cp`, `doctor|doc`, `gate|security|sec`, `test|tests`, `rollback|rb`, `failure|record|fail`, `handoff`, `scratch`, `clean`, `env`, `install`, `check-skills`, `recommend`, `email`).
+  - Интеллектуальное многоуровневое авто-определение путей каталога `scripts/` (рядом со скриптом, в скриптовой директории, в git root, в глобальном скилле и в CWD).
+  - Защищенный от пустых строк сплэттинг аргументов в PowerShell 5.1 (сохранение дефолтных значений скриптов).
+  - Модульные тесты `tests/test_guardian.py` (5/5 PASSED в pytest через `run-tests.ps1`).
+  - Раздел 20 в `SKILL.md` и обновление документации.
+
 ## 4a. Известные исправления (Regressions — не сломать повторно)
 1. Раздел 8/9 не должен снова разрешать «пароль по умолчанию» — именно эта формулировка легализовала бэкдор.
 2. `checkpoint.ps1` не должен пушить без `-Push`: серия неудачных правок уезжала в remote.
@@ -116,8 +133,11 @@
 17. В `checkpoint.ps1` запуск `graphify` не должен блокироваться условием `if (Test-Path $graphifyDir)` и обязан выполняться с `$ErrorActionPreference = "Continue"` ПОСЛЕ добавления `.backups/` в `.gitignore` и `.graphifyignore` (иначе PowerShell 5.1 обрывает `python -m graphify` на `stderr`, а новые проекты остаются без графа).
 18. В `prepare-handoff.ps1` запрещено писать ```` ```text ```` внутри двойного here-string `@"..."@` (иначе `` `t `` превращается в символ табуляции `` `	ext ``); название диалога обязано извлекаться из `conversation_summaries.db` и сохраняться в `.agents/HANDOFF.md`.
 19. Linux shell-скрипты (`.sh`, `S9*`) и Android KeyLayout (`.kl`, `.idc`) обязаны сохраняться строго в UTF-8 без BOM (проверяется правилом `SYNTAX-BOM` в `security-gate.ps1`), а выполненные рекомендации `[x] ВЫПОЛНЕНО` обязаны архивироваться в `docs/APPLIED_RECOMMENDATIONS.md` (правило `REC-001`).
+20. В `guardian.ps1` вызов целевых скриптов обязан явно разделять ветку `$RestArgs.Count -gt 0` (вызов с аргументами) и ветку без аргументов: в противном случае сплэттинг пустого массива `@RestArgs` в PowerShell 5.1 приводит к передаче пустой строки `""` в первый позиционный параметр и затиранию параметров со значениями по умолчанию (например, `$ProjectPath = (Get-Location).Path`).
 
 ## 5. История Изменений
+
+- 🛡️ **Чекпоинт** [2026-11-21 20:50:27] (метка: 2026-11-21_20-50-27): v 2 . 0 . 0   P r o j e c t   G u a r d i a n   C o n s o l i d a t i o n   C L I   F a c a d e   a n d   T D D   S u i t e
 
 - 🛡️ **Чекпоинт** [2026-11-21 20:37:59] (метка: 2026-11-21_20-37-59): Pre-v2.0 Consolidation guardian facade
 

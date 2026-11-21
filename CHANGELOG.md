@@ -2,6 +2,30 @@
 
 All notable changes to Project Guardian are documented in this file.
 
+## v2.0.0 - 2026-11-21
+
+### Added
+- **Project Guardian CLI v2.0 Facade (`guardian.ps1`, `scripts/guardian.ps1`)**:
+  - Единая консольная точка входа, консолидирующая все утилиты Guardian: `checkpoint` (`cp`), `doctor` (`doc`), `gate` (`security`, `sec`), `test` (`tests`), `rollback` (`rb`), `failure` (`record`, `fail`), `handoff`, `scratch`, `clean`, `env`, `install`, `check-skills`, `recommend`, `email`.
+  - Автоматическое многоуровневое определение расположения каталога `scripts/` (относительно вызываемого скрипта, git root, глобального скилла и CWD).
+  - Безопасный сплэттинг аргументов PowerShell 5.1 (предотвращает затирание значений по умолчанию пустыми строками при вызовах без аргументов).
+  - Информативная справка `--help` с группировкой команд, подсветкой синтаксиса и практическими примерами.
+  - Набор модульных тестов `tests/test_guardian.py` (верификация корневого и скриптового входов, парсинга команд, кода возврата и Security Gate).
+- **Раздел 20 в `SKILL.md`**: спецификация фасада CLI, таблица команд и регламент вызовов.
+
+---
+
+## v1.8.1 - 2026-11-21
+
+### Added
+- **Auto-Ensure Test Runner (`scripts/run-tests.ps1`)**:
+  - Автоматическая проверка наличия `pytest` с самовосстановлением через `uv pip install` / `pip install`.
+  - Безопасный фоллбэк на встроенный `python -m unittest discover` при отсутствии pytest.
+  - Поддержка запуска `npm test` для проектов с `package.json`.
+  - Интеграция в фасад и тесты TDD.
+
+---
+
 ## v1.8.0 - 2026-11-20
 
 ### Added
