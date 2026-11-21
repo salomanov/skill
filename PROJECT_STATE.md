@@ -137,6 +137,8 @@
 
 ## 5. История Изменений
 
+- 🛡️ **Чекпоинт** [2026-11-22 01:35:59] (метка: 2026-11-22_01-35-59): pre-fix: targeted skill recommendation routing
+
 - 🛡️ **Чекпоинт** [2026-11-21 21:00:25] (метка: 2026-11-21_21-00-25): v2.0.0 Final Consolidation & Global Installation Sync
 
 - 🛡️ **Чекпоинт** [2026-11-21 20:53:26] (метка: 2026-11-21_20-53-26): v2.0.0 RestArgs array typing fix
