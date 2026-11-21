@@ -11,3 +11,10 @@
 - **Симптом и ущерб**: Приложение крашится при загрузке бэкапа или подключении: IllegalArgumentException: no NetworkModule installed for scheme tcp; aapt2/apktool падают с exit code 1
 - **Причина (Root Cause)**: 1. Потеря каталога META-INF/services/ (Java SPI) при ручной перепаковке APK; 2. Кириллица в пути проекта Своё приложение Mqtt ломает утилиты Android SDK
 - **Решение и правило**: Внедрен регламент v1.7.8 (SKILL.md §17) и проверка PATH-001 в security-gate.ps1. Запрет кириллицы в путях, обязательное сохранение META-INF/services/ и adb logcat при сбоях
+
+---
+
+### [Инцидент 2026-11-22 01:36:08] Ложная маршрутизация рекомендаций в ядро Guardian вместо доменных скиллов
+- **Симптом и ущерб**: Доменная рекомендация по вотчдогу Usque на роутере была отправлена в E:\Projects\Skill вместо router-ops
+- **Причина (Root Cause)**: Флаг -ToSkill и дефолтное поведение add-recommendation.ps1 жестко направляли все рекомендации в E:\Projects\Skill без поддержки выбора конкретного скилла
+- **Решение и правило**: Добавить параметр -Skill <Name> в add-recommendation.ps1 и record-failure.ps1 с резолвом путей в ~/.gemini/config/skills и запретить слепой сброс
