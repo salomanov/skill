@@ -113,7 +113,7 @@ if ($args.Count -eq 0 -or $args[0] -in @('-h', '--help', 'help', '/?', '-?', 'in
 }
 
 $Cmd = $args[0].ToLowerInvariant()
-$RestArgs = if ($args.Count -gt 1) { $args[1..($args.Count - 1)] } else { @() }
+[object[]]$RestArgs = if ($args.Count -gt 1) { [object[]]$args[1..($args.Count - 1)] } else { @() }
 
 if (-not $CommandMap.ContainsKey($Cmd)) {
     Write-Host "`n[ERROR] Неизвестная команда Guardian: '$Cmd'" -ForegroundColor Red
