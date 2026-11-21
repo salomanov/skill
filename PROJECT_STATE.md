@@ -119,6 +119,8 @@
 
 ## 5. История Изменений
 
+- 🛡️ **Чекпоинт** [2026-11-21 19:03:49] (метка: 2026-11-21_19-03-49): Pre-v1.8.1 Auto-Ensure Test Runner and run-tests script
+
 - 🛡️ **Чекпоинт** [2026-11-20 17:40:46] (метка: 2026-11-20_17-40-46): v1.8.0 Auto-Graphify, Dialog Title Preservation, Failure & Recommendation Gates
 
 - 🛡️ **Чекпоинт** [2026-11-18 21:25:28] (метка: 2026-11-18_21-25-28): Pre-v1.8.0 Audit, Dialog Title Preservation, Auto-Graphify & Failure/Recommendation Gates
