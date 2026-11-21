@@ -137,6 +137,8 @@
 
 ## 5. История Изменений
 
+- 🛡️ **Чекпоинт** [2026-11-21 21:00:25] (метка: 2026-11-21_21-00-25): v2.0.0 Final Consolidation & Global Installation Sync
+
 - 🛡️ **Чекпоинт** [2026-11-21 20:53:26] (метка: 2026-11-21_20-53-26): v2.0.0 RestArgs array typing fix
 
 - 🛡️ **Чекпоинт** [2026-11-21 20:50:27] (метка: 2026-11-21_20-50-27): v 2 . 0 . 0   P r o j e c t   G u a r d i a n   C o n s o l i d a t i o n   C L I   F a c a d e   a n d   T D D   S u i t e
@@ -372,6 +374,14 @@
 ### [2026-09-23 10:30]
 - **Что сделано**: Первоначальный релиз скилла `project-guardian`.
 
+### [2026-11-21 21:00]
+- **Что сделано**: Завершена консолидация релиза **v2.0.0** (Project Guardian CLI Facade & Global Synchronization):
+  1. **Единый фасад `guardian.ps1`**: консолидировал 14 скриптов в единую точку входа с алиасами и контекстной справкой.
+  2. **TDD верификация**: разработаны автотесты `tests/test_guardian.py` (5/5 PASSED).
+  3. **Синхронизация глобальной установки**: глобальный каталог `~/.gemini/config/skills/project-guardian` (`C:\Users\Salomanov\.gemini\config\skills\project-guardian`) полностью синхронизирован с `origin/main` (HEAD `582da29`), протестирован через `guardian.ps1 test`, `gate` и `doctor`.
+  4. **Пуш релиза**: все коммиты отправлены в удаленный репозиторий `https://github.com/salomanov/skill.git`.
+- **Чекпоинт**: Релиз v2.0.0 (Consolidation Suite).
+
 ## 6. Следующие Шаги
-1. Запушить релиз v1.6.1 в `https://github.com/salomanov/skill.git`.
-2. Синхронизировать глобальную установку в `~/.gemini/config/skills/project-guardian`.
+1. Использовать консолидированный фасад `guardian.ps1` во всех диалогах и проектах как единый стандарт.
+2. Мониторить свежие скиллы в каталоге апстрима через `guardian.ps1 check-skills`.
