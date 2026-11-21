@@ -88,7 +88,7 @@ function Show-GuardianHelp {
         [PSCustomObject]@{ Команда = 'env'; Описание = 'Сканирование переменных окружения и сборка .env.example' },
         [PSCustomObject]@{ Команда = 'install'; Описание = 'Автономная установка/обновление скилла из каталога Agentic Awesome Skills' },
         [PSCustomObject]@{ Команда = 'check-skills'; Описание = 'Мониторинг обновлений и свежих скиллов в апстриме' },
-        [PSCustomObject]@{ Команда = 'recommend'; Описание = 'Фиксация рекомендаций во внешнем проекте (AGENT_RECOMMENDATIONS.md)' },
+        [PSCustomObject]@{ Команда = 'recommend'; Описание = 'Фиксация рекомендаций во внешнем проекте или профильном скилле (-Skill)' },
         [PSCustomObject]@{ Команда = 'email'; Описание = 'Универсальная отправка файлов или отчётов на email' }
     )
 
@@ -103,6 +103,7 @@ function Show-GuardianHelp {
     Write-Host "  .\guardian.ps1 test" -ForegroundColor Gray
     Write-Host "  .\guardian.ps1 rollback -List" -ForegroundColor Gray
     Write-Host "  .\guardian.ps1 failure -Title `"OOM`" -Symptom `"Краш`" -RootCause `"Лимит памяти`" -Solution `"Swap`"" -ForegroundColor Gray
+    Write-Host "  .\guardian.ps1 recommend -Skill router-ops -Title `"Новый профиль`" -Problem `"Сбои`" -Solution `"Тюнинг`"" -ForegroundColor Gray
     Write-Host "  .\guardian.ps1 handoff -NextGoal `"Продолжить рефакторинг`"`
 " -ForegroundColor Gray
 }

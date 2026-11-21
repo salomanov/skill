@@ -446,14 +446,29 @@ description: >-
 ### Протокол передачи задач между проектами:
 Если обнаружен баг, архитектурная проблема или потребность во внешнем проекте:
 1. Агент **НЕ трогает** исходные файлы того проекта.
-2. Агент создаёт или дополняет в корне целевого проекта файл `AGENT_RECOMMENDATIONS.md` через генератор `add-recommendation.ps1` (для отправки правил в базовый скилл — флаг `-ToSkill`):
-   ```powershell
-   & "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\add-recommendation.ps1" `
-       -ToSkill `
-       -Title "Краткое название правила" `
-       -Problem "Симптом и первопричина" `
-       -Solution "Решение или проверка"
-   ```
+2. Агент создаёт или дополняет файл `AGENT_RECOMMENDATIONS.md` через генератор `add-recommendation.ps1`:
+   - **Для профильного скилла** (`router-ops`, `tasmota-pro`, `scan-to-epub-pro` и др.) — передавать `-Skill <Имя_Скилла>`:
+     ```powershell
+     & "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\add-recommendation.ps1" `
+         -Skill "router-ops" `
+         -Title "Краткое название правила" `
+         -Problem "Симптом и первопричина" `
+         -Solution "Решение или проверка"
+     ```
+   - **Для универсального ядра Project Guardian** (`Skill`) — передавать `-Skill project-guardian` (принимаются ТОЛЬКО системные мета-правила надежности, безопасности, скриптов, рантаймов и контекстной памяти):
+     ```powershell
+     & "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\add-recommendation.ps1" `
+         -Skill "project-guardian" `
+         -Title "Новое мета-правило" `
+         -Problem "..." -Solution "..."
+     ```
+   - **Для конкретного внешнего проекта** — передавать `-TargetProject <Путь>`:
+     ```powershell
+     & "C:\Users\Salomanov\.gemini\config\skills\project-guardian\scripts\add-recommendation.ps1" `
+         -TargetProject "E:\Projects\Router_api" `
+         -Title "Дедлок логаута" `
+         -Problem "..." -Solution "..."
+     ```
    *(Неархивированные пункты `[x] ВЫПОЛНЕНО` в `AGENT_RECOMMENDATIONS.md` блокируются исполняемым правилом `REC-001` в `security-gate.ps1`.)*
 3. Агент информирует пользователя со ссылкой на файл и предлагает перейти в диалог целевого проекта.
 

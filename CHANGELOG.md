@@ -2,6 +2,20 @@
 
 All notable changes to Project Guardian are documented in this file.
 
+## v2.0.1 - 2026-11-22
+
+### Fixed
+- **Targeted Skill Recommendation Routing (`scripts/add-recommendation.ps1`, `scripts/record-failure.ps1`)**:
+  - Устранена архитектурная ошибка, когда все рекомендации при вызове `-ToSkill` или пустом `-TargetProject` слепо сбрасывались в ядро `Skill` (Project Guardian).
+  - Внедрен параметр `-Skill <SkillName>` (алиас `-SkillName`) с авто-поиском папки скилла в `~/.gemini/config/skills/<SkillName>` и локальных каталогах воркспейса.
+  - Запрещен нецелевой сброс: вызов `add-recommendation.ps1` без указания `-Skill` или `-TargetProject` завершается с понятной ошибкой и примерами.
+  - Параметр `-RecommendToSkill` в `record-failure.ps1` переведен на поддержку имени скилла.
+  - Раздел 13 `SKILL.md` дополнен четким протоколом адресации (мета-правила для Guardian vs предметные правила для доменных скиллов).
+  - Добавлен тест в `tests/test_guardian.py` (6/6 PASSED).
+  - Ошибочная рекомендация Usque перенаправлена в `router-ops` и заархивирована в `docs/APPLIED_RECOMMENDATIONS.md`.
+
+---
+
 ## v2.0.0 - 2026-11-21
 
 ### Added

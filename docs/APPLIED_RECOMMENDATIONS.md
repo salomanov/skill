@@ -31,3 +31,11 @@
 - **Симптом**: Конструкции вида `str.indexOf("\"Key\":")` при обработке скриптами превращаются в `""Key":`, вызывая ошибку GCC `unable to find string literal operator 'operator""Key'`.
 - **Внедрение**: Закреплено в `SKILL.md` (Раздел 10.13) — использовать `str.indexOf("Key")` или `R"raw("Key":)raw"`.
 - **Верификация**: Закреплено в `SKILL.md`, пройдена проверка `security-gate.ps1`.
+
+---
+
+## [2026-11-22] Анти-флаппинг вотчдога Usque в S99usque (Перенаправлено в `router-ops`)
+- **Источник**: Проект «Router_Workspace» (дата: 2026-11-21 22:11).
+- **Симптом**: Рекомендация по скрипту службы `/opt/etc/init.d/S99usque` ошибочно поступила в ядро Project Guardian (`Skill`) из-за неселективного флага `-ToSkill` и дефолта в `add-recommendation.ps1`.
+- **Внедрение**: Перенаправлена в предметный скилл `router-ops` (`E:\Projects\Router_Workspace\skills\router-ops\AGENT_RECOMMENDATIONS.md`). В `Project Guardian` (v2.0.1) внедрена селективная маршрутизация (`-Skill <Name>`) и запрет слепого сброса при отсутствии адресата.
+- **Верификация**: Задача зафиксирована в `router-ops`, в `Skill` файл `AGENT_RECOMMENDATIONS.md` очищен, Security Gate пройден.

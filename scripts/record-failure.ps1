@@ -21,7 +21,9 @@
 .PARAMETER NoCheckpoint
     Не запускать автоматический checkpoint после записи.
 .PARAMETER RecommendToSkill
-    Автоматически продублировать этот урок как рекомендацию [ ] ТРЕБУЕТ ВНЕДРЕНИЯ в E:\Projects\Skill\AGENT_RECOMMENDATIONS.md.
+    Автоматически продублировать этот урок как рекомендацию в указанный скилл (например: -RecommendToSkill router-ops или project-guardian).
+.PARAMETER ToSkill
+    (Устаревший алиас) Продублировать рекомендацию в ядро Project Guardian.
 .PARAMETER RecommendToProject
     Автоматически продублировать рекомендацию в указанный внешний проект.
 #>
@@ -49,7 +51,10 @@ param(
     [switch]$NoCheckpoint,
 
     [Parameter(Mandatory=$false)]
-    [switch]$RecommendToSkill,
+    [string]$RecommendToSkill = "",
+
+    [Parameter(Mandatory=$false)]
+    [switch]$ToSkill = $false,
 
     [Parameter(Mandatory=$false)]
     [string]$RecommendToProject = "",
@@ -183,16 +188,19 @@ $entry = "`n---`n`n### [Инцидент $timestamp] $Title`n- **Симптом 
 [System.IO.File]::AppendAllText($errorFile, $entry, [System.Text.Encoding]::UTF8)
 Write-Host "[OK] Инцидент зафиксирован в $errorFile" -ForegroundColor Green
 
-# 2.5. Автоматическая отправка рекомендации в Skill или целевой проект (если запрошено)
+# 2.5. Автоматическая отправка рекомендации в скилл или целевой проект (если запрошено)
 $addRecScript = Join-Path $PSScriptRoot "add-recommendation.ps1"
 $sourceName = Split-Path $ProjectPath -Leaf
-if ($RecommendToSkill -and (Test-Path -LiteralPath $addRecScript)) {
-    & $addRecScript -ToSkill -SourceProject $sourceName -Title $Title -Problem "$Symptom. Причина: $RootCause" -Solution $Solution
+$targetSkill = if ($RecommendToSkill) { $RecommendToSkill } elseif ($ToSkill) { "project-guardian" } else { "" }
+
+if ($targetSkill -and (Test-Path -LiteralPath $addRecScript)) {
+    & $addRecScript -Skill $targetSkill -SourceProject $sourceName -Title $Title -Problem "$Symptom. Причина: $RootCause" -Solution $Solution
 } elseif ($RecommendToProject -and (Test-Path -LiteralPath $addRecScript)) {
     & $addRecScript -TargetProject $RecommendToProject -SourceProject $sourceName -Title $Title -Problem "$Symptom. Причина: $RootCause" -Solution $Solution
 } else {
-    Write-Host "[Подсказка] Если этот сбой выявил системное правило для скилла Project Guardian, передайте -RecommendToSkill или выполните:" -ForegroundColor DarkYellow
-    Write-Host "  & `"$addRecScript`" -ToSkill -Title `"$Title`" -Problem `"$RootCause`" -Solution `"$Solution`"" -ForegroundColor Gray
+    Write-Host "[Подсказка] Если этот сбой выявил системное правило:" -ForegroundColor DarkYellow
+    Write-Host "  Для профильного скилла:  & `"$addRecScript`" -Skill <имя_скилла> -Title `"$Title`" -Problem `"$RootCause`" -Solution `"$Solution`"" -ForegroundColor Gray
+    Write-Host "  Для ядра Guardian:       & `"$addRecScript`" -Skill project-guardian -Title `"$Title`" -Problem `"$RootCause`" -Solution `"$Solution`"" -ForegroundColor Gray
 }
 
 # 3. Автоматический запуск чекпоинта и актуализация graphify

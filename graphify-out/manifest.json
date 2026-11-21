@@ -1,9 +1,9 @@
 {
   "scripts/add-recommendation.ps1": {
-    "mtime": 1795178083.4257925,
-    "seen": 1795178453.7239816,
-    "ast_hash": "48a60fe694c089eb6270d0fde5e62305",
-    "semantic_hash": "48a60fe694c089eb6270d0fde5e62305"
+    "mtime": 1795293435.1632261,
+    "seen": 1795293635.1985168,
+    "ast_hash": "3575bf25c1f3e0433ab6bc495b515483",
+    "semantic_hash": ""
   },
   "scripts/check-new-skills.ps1": {
     "mtime": 1794635384.6144726,
@@ -60,10 +60,10 @@
     "semantic_hash": "85159aded81667e87017da6a1db60242"
   },
   "scripts/record-failure.ps1": {
-    "mtime": 1795178085.4700072,
-    "seen": 1795178453.7240074,
-    "ast_hash": "e7b02c37ce10126af7ed739c86a9594e",
-    "semantic_hash": "e7b02c37ce10126af7ed739c86a9594e"
+    "mtime": 1795293463.3754811,
+    "seen": 1795293635.1985488,
+    "ast_hash": "f13e6909d3e85cda7c7fbcf025695c9b",
+    "semantic_hash": ""
   },
   "scripts/rollback.ps1": {
     "mtime": 1793912332.3534255,
@@ -96,27 +96,27 @@
     "semantic_hash": ""
   },
   ".agents/HANDOFF.md": {
-    "mtime": 1795274672.29428,
-    "seen": 1795276229.8932364,
-    "ast_hash": "2ef10d266800bdd5d71014d3dd715499",
+    "mtime": 1795276417.602064,
+    "seen": 1795293635.1985633,
+    "ast_hash": "6309ba823b2aeb0f3f3e5ddea3c8789b",
     "semantic_hash": ""
   },
   "AGENT_RECOMMENDATIONS.md": {
-    "mtime": 1795178312.834986,
-    "seen": 1795274663.5788486,
-    "ast_hash": "acf42c52086ae13d2f1e58b9d9841ecc",
+    "mtime": 1795293524.384233,
+    "seen": 1795293635.198565,
+    "ast_hash": "7eef30c0fe711633715e9f88ce27b66d",
     "semantic_hash": ""
   },
   "CHANGELOG.md": {
-    "mtime": 1795275998.0112965,
-    "seen": 1795276229.893241,
-    "ast_hash": "2fa755206fd45e4471b14b3eb113a8b4",
+    "mtime": 1795293611.9562576,
+    "seen": 1795293635.1985672,
+    "ast_hash": "a17772c976afd1f0fdf98b52c6580750",
     "semantic_hash": ""
   },
   "PROJECT_STATE.md": {
-    "mtime": 1795276406.903448,
-    "seen": 1795276409.2456179,
-    "ast_hash": "8acd0f1960c64b3c56fd4f472b653fee",
+    "mtime": 1795293633.3599515,
+    "seen": 1795293635.198569,
+    "ast_hash": "acd6add4c88681cdb6839c243ecb1f8c",
     "semantic_hash": ""
   },
   "README.md": {
@@ -126,9 +126,9 @@
     "semantic_hash": ""
   },
   "SKILL.md": {
-    "mtime": 1795275985.6544042,
-    "seen": 1795276229.8932467,
-    "ast_hash": "3c066405a2c28fb92536ab844f705fcf",
+    "mtime": 1795293538.433913,
+    "seen": 1795293635.198573,
+    "ast_hash": "5d75ef56cae2147cc3afcbe21f554d36",
     "semantic_hash": ""
   },
   "SKILL_REVIEW.md": {
@@ -138,15 +138,15 @@
     "semantic_hash": ""
   },
   "docs/APPLIED_RECOMMENDATIONS.md": {
-    "mtime": 1795178311.0620306,
-    "seen": 1795274663.578859,
-    "ast_hash": "d86883ac1e893521ccc476a7c8571b74",
+    "mtime": 1795293520.1958501,
+    "seen": 1795293635.1985772,
+    "ast_hash": "b4dae0860f63b9c6b519e51bf8c2a66f",
     "semantic_hash": ""
   },
   "docs/ERRORS_AND_FAILURES.md": {
-    "mtime": 1794757614.6385098,
-    "seen": 1795274663.5788605,
-    "ast_hash": "82e09ec15d2c29e7682e0c225f199078",
+    "mtime": 1795293368.7862787,
+    "seen": 1795293635.1985788,
+    "ast_hash": "8a6ba740be941dd7065d486fa1324f8e",
     "semantic_hash": ""
   },
   "references/PROJECT_STATE_TEMPLATE.md": {
@@ -156,21 +156,21 @@
     "semantic_hash": ""
   },
   "guardian.ps1": {
-    "mtime": 1795276379.5524585,
-    "seen": 1795276409.2455523,
-    "ast_hash": "f39351e377560d439533e7c6e471aafe",
+    "mtime": 1795293475.4423363,
+    "seen": 1795293635.1985083,
+    "ast_hash": "cafc4895e6c924bd881f9ffc1e645dff",
     "semantic_hash": ""
   },
   "scripts/guardian.ps1": {
-    "mtime": 1795276379.5529675,
-    "seen": 1795276409.2455864,
-    "ast_hash": "f39351e377560d439533e7c6e471aafe",
+    "mtime": 1795293482.5219162,
+    "seen": 1795293635.1985402,
+    "ast_hash": "cafc4895e6c924bd881f9ffc1e645dff",
     "semantic_hash": ""
   },
   "tests/test_guardian.py": {
-    "mtime": 1795275879.114112,
-    "seen": 1795276229.8932347,
-    "ast_hash": "60d0b685d3eb6dbf39b0e7f9b7becf9a",
+    "mtime": 1795293491.0985088,
+    "seen": 1795293635.1985612,
+    "ast_hash": "b26ee72af5cd1b612a281aff83cdd9f1",
     "semantic_hash": ""
   }
 }

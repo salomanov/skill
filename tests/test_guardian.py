@@ -51,3 +51,9 @@ def test_guardian_gate():
     res = run_guardian(p, "gate")
     assert res.returncode == 0
     assert "SECURITY GATE PASSED" in res.stdout
+
+def test_guardian_recommend_no_target_fails():
+    p = REPO_ROOT / "guardian.ps1"
+    res = run_guardian(p, "recommend", "-Title", "Test Recommendation Without Target")
+    assert res.returncode == 1
+    assert "Не указан адресат рекомендации" in res.stdout
