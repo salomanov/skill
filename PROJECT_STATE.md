@@ -119,6 +119,8 @@
 
 ## 5. История Изменений
 
+- 🛡️ **Чекпоинт** [2026-11-21 20:24:21] (метка: 2026-11-21_20-24-21): v1.8.1 Auto-Ensure Test Runner and router-ops domain extraction
+
 - 🛡️ **Чекпоинт** [2026-11-21 19:03:49] (метка: 2026-11-21_19-03-49): Pre-v1.8.1 Auto-Ensure Test Runner and run-tests script
 
 - 🛡️ **Чекпоинт** [2026-11-20 17:40:46] (метка: 2026-11-20_17-40-46): v1.8.0 Auto-Graphify, Dialog Title Preservation, Failure & Recommendation Gates

@@ -359,12 +359,12 @@ if ($Verify) {
     }
 
     if ($testFound) {
-        Write-Host "Обнаружены тесты Python. Запуск тестов..." -ForegroundColor Gray
+        Write-Host "Обнаружены тесты Python. Запуск через run-tests.ps1..." -ForegroundColor Gray
         $prevEAP = $ErrorActionPreference
         $ErrorActionPreference = "Continue"
-        $null = & python -c "import pytest" 2>$null
-        if ($LASTEXITCODE -eq 0) {
-            & python -m pytest $ProjectPath -q
+        $runTestsScript = Join-Path (Split-Path $MyInvocation.MyCommand.Path) "run-tests.ps1"
+        if (Test-Path -LiteralPath $runTestsScript) {
+            & $runTestsScript -ProjectPath $ProjectPath
             if ($LASTEXITCODE -ne 0) { $testPassed = $false }
         } else {
             & python -m unittest discover -s $ProjectPath -q 2>$null

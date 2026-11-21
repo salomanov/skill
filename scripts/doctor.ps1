@@ -63,6 +63,17 @@ try {
     else { Report-Item "Node.js" "WARN" "Не обнаружен в PATH" }
 } catch { Report-Item "Node.js" "WARN" "Не обнаружен" }
 
+try {
+    $uvVer = (& uv --version 2>$null)
+    if ($uvVer) { Report-Item "uv package manager" "OK" $uvVer.Trim() }
+} catch {}
+
+try {
+    $pytestVer = (& python -m pytest --version 2>&1)
+    if ($LASTEXITCODE -eq 0 -and $pytestVer) { Report-Item "pytest runner" "OK" ($pytestVer -join " ").Trim() }
+    else { Report-Item "pytest runner" "WARN" "Не установлен (auto-ensure в run-tests.ps1 установит при запуске)" }
+} catch { Report-Item "pytest runner" "WARN" "Не обнаружен" }
+
 # 2. Состояние Git-репозитория
 Write-Host "`n2. Состояние Git репозитория:" -ForegroundColor Cyan
 $isGit = $false
