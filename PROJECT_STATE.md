@@ -3,8 +3,8 @@
 > Данный файл автоматически ведется агентом и служит долговременной памятью проекта.
 > При начале новой сессии агент считывает этот файл в первую очередь.
 
-- **Версия**: `v2.1.0` (Harness² Recursive Scaffolding & Skill Probe Integration)
-- **Статус**: Активен, Harness² Probing & 8 Dimensions Operational (9/9 Tests PASSED)
+- **Версия**: `v2.2.0` (Production Hardening & Honest Scaffolding Suite)
+- **Статус**: Активен, 26/26 Behavioral Tests PASSED, Security Gate & Step Counter Hardened
 - **Дата обновления**: 2026-11-22
 
 
@@ -127,6 +127,13 @@
   - Добавлены команды `probe` (алиас `prb`) и `harness` (алиас `hrn`) в `guardian.ps1` CLI (в корне и в `scripts/`).
   - TDD-тесты `tests/test_guardian.py` расширены до 9 тестов (9/9 PASSED).
   - Манифест `SKILL.md` дополнен Разделом 21.
+- [x] **v2.2.0**: Production Hardening & Honest Scaffolding Suite (по итогам независимого аудита):
+  - Починен счетчик шагов сессии `session-guard.ps1` (парсинг `step_index` в JSONL, эвристика пути проекта, тихий возврат 0 при неизвестной сессии).
+  - В `security-gate.ps1` внедрено исполняемое правило `PS-001` (проверка `Test-Path` с `-LiteralPath`).
+  - Усилен формат `.security-gate-allow`: привязка к правилу, файлу и номеру строки (`RULE-ID path[:line] # reason`), удалены широкие подстроки и персональные email.
+  - Устранено дублирование CLI: корневой `guardian.ps1` переведен на тонкий шим к `scripts/guardian.ps1`.
+  - Поведенческий TDD-сьют `tests/test_guardian.py` расширен с 9 до 26 автотестов (26/26 PASSED): раундтрип `checkpoint`/`rollback`, probe gate в `install-skill`, `session-guard`.
+  - В `.gitignore` добавлены `ses_*.json` и `*.transcript.json`.
 
 ## 4a. Известные исправления (Regressions — не сломать повторно)
 1. Раздел 8/9 не должен снова разрешать «пароль по умолчанию» — именно эта формулировка легализовала бэкдор.
@@ -153,6 +160,8 @@
 22. В `doctor.ps1` параметры обязаны оформляться с `[CmdletBinding()]` и валидацией `$ProjectPath.StartsWith("-")`, чтобы флаги вроде `-Harness` не затирали путь к проекту по позиционному сопоставлению.
 
 ## 5. История Изменений
+
+- 🛡️ **Чекпоинт** [2026-11-22 17:20:02] (метка: 2026-11-22_17-20-02): v2.2.0: Production Hardening & Honest Scaffolding Suite
 
 - 🛡️ **Чекпоинт** [2026-11-22 12:20:50] (метка: 2026-11-22_12-20-50): v2.1.0: Harness2 Integration (Probe Gate & 8 Dimensions Audit)
 
@@ -298,7 +307,7 @@
 ### [2026-11-18 10:55]
 - **Что сделано**: Внедрен универсальный почтовый шлюз (Релиз v1.7.11):
   1. `scripts/send-email.py` и `scripts/send-email.ps1`: универсальный скрипт отправки писем с поддержкой вложений любого формата, HTML/текста и SSL/TLS (Mail.ru SMTP).
-  2. Глобальная конфигурация `~/.gemini/config/email_settings.json` (адрес получателя по умолчанию: `salomanov@ya.ru`, отправитель: `salomanov@list.ru`).
+  2. Глобальная конфигурация `~/.gemini/config/email_settings.json` (адрес получателя по умолчанию: `recipient@example.com`, отправитель: `sender@example.com`).
   3. `SKILL.md`: добавлен Раздел 19 «Универсальная отправка на почту» с триггерами *«напиши мне на почту»*, *«скинь мне на почту»*, *«отправь на email»*.
   4. `CHANGELOG.md`: зафиксирован релиз v1.7.11.
 - **Чекпоинт**: Релиз v1.7.11 (Universal Email Dispatcher).

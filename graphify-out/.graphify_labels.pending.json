@@ -5,7 +5,7 @@
   "3": "audit-harness.ps1",
   "4": "probe-skill.ps1",
   "5": "run-tests.ps1",
-  "6": "checkpoint.ps1",
+  "6": "make_project",
   "7": "doctor.ps1",
   "8": "install-skill.ps1",
   "9": "add-recommendation.ps1",
@@ -16,8 +16,12 @@
   "14": "prepare-handoff.ps1",
   "15": "record-failure.ps1",
   "16": "rollback.ps1",
-  "17": "send-email.ps1",
+  "17": "test_repo_allowlist_uses_strict_format",
   "18": "test_guardian.py",
   "19": "guardian.ps1",
-  "20": "scripts/guardian.ps1"
+  "20": "scripts/guardian.ps1",
+  "21": "session-guard.ps1",
+  "22": "lib",
+  "23": "test_install_skill_calls_probe_gate",
+  "24": "send-email.ps1"
 }

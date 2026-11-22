@@ -1,5 +1,7 @@
 .backups/
 scratch/
 *.log
+ses_*.json
+*.transcript.json
 .DS_Store
 Thumbs.db

@@ -12,13 +12,13 @@ $env:PYTHONIOENCODING = "utf-8"
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
 # 0. Нормализация пути и поддержка подпроектов
-if ($ProjectPath -and (Test-Path $ProjectPath)) {
+if ($ProjectPath -and (Test-Path -LiteralPath $ProjectPath)) {
     $ProjectPath = (Resolve-Path $ProjectPath).Path
 }
 
 if ($SubProject) {
     $cand = Join-Path $ProjectPath $SubProject
-    if (Test-Path $cand) {
+    if (Test-Path -LiteralPath $cand) {
         $ProjectPath = (Resolve-Path $cand).Path
     }
 }
@@ -31,7 +31,7 @@ if ($DryRun) {
 }
 
 $backupRoot = Join-Path $ProjectPath ".backups"
-if (-not (Test-Path $backupRoot)) {
+if (-not (Test-Path -LiteralPath $backupRoot)) {
     Write-Host "Папка .backups отсутствует. Нечего очищать." -ForegroundColor Gray
     return
 }

@@ -2,6 +2,27 @@
 
 All notable changes to Project Guardian are documented in this file.
 
+## v2.2.0 - 2026-11-22
+
+### Added & Hardened
+- **Устранение ложных тревог счетчика шагов (`scripts/session-guard.ps1`, `scripts/session-steps.ps1`)**:
+  - Счетчик переведен на подсчет реальных шагов (`step_index` в JSONL) вместо сырых строк лога.
+  - Добавлена фильтрация транскриптов по пути проекта (`$ProjectPath`) и времени изменения (<= 10 минут).
+  - При отсутствии однозначного определения сессии функция тихо возвращает 0.
+- **Исполняемая проверка регрессии #16 (`PS-001` в `security-gate.ps1`)**:
+  - Добавлено правило `PS-001` для обязательного использования `-LiteralPath` в вызовах `Test-Path` в `.ps1`.
+- **Строгий гранулярный формат исключений (`.security-gate-allow`)**:
+  - Формат обновлен до `<RULE-ID> <path[:line]> # <причина>`.
+  - Запрещен неявный пропуск секретов по подстрокам на весь проект; личные email заменены на `example.com`.
+- **Устранение дублирования CLI (`guardian.ps1`)**:
+  - Корневой `guardian.ps1` стал тонким шимом к `scripts/guardian.ps1` (устранен ручной дрейф двух копий).
+- **Поведенческий TDD-сьют (`tests/test_guardian.py`)**:
+  - Количество автотестов увеличено с 9 до 26 (26/26 PASSED): раундтрип `checkpoint`/`rollback`, `install-skill` probe gate, `session-guard`, тонкий шим.
+- **Игнорирование дампов сессий**:
+  - В `.gitignore` добавлены паттерны `ses_*.json` и `*.transcript.json`.
+
+---
+
 ## v2.1.0 - 2026-11-22
 
 ### Added
@@ -100,7 +121,7 @@ All notable changes to Project Guardian are documented in this file.
 - **Universal Email Dispatcher (Раздел 19 в SKILL.md)**:
   - Глобальный скрипт отправки почты `scripts/send-email.py` и PowerShell-обертка `scripts/send-email.ps1`.
   - Поддержка вложений любого типа (файлы, картинки, архивы, EPUB/PDF, логи), SSL/TLS порт 465 (Mail.ru SMTP), кириллических имен файлов.
-  - Безопасная конфигурация в `~/.gemini/config/email_settings.json` (адрес получателя по умолчанию: `salomanov@ya.ru`, отправитель: `salomanov@list.ru`).
+  - Безопасная конфигурация в `~/.gemini/config/email_settings.json` (адрес получателя по умолчанию: `recipient@example.com`, отправитель: `sender@example.com`).
   - Поведенческие триггеры в `SKILL.md`: автоматическая отправка по фразам *«напиши мне на почту»*, *«скинь мне на почту»*, *«отправь на email»* без лишних переспросов адреса.
 
 ### Changed

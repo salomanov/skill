@@ -3,7 +3,7 @@
     Универсальная отправка email для Project Guardian.
 .DESCRIPTION
     Отправляет письмо через SMTP с вложениями, используя глобальные настройки из
-    ~/.gemini/config/email_settings.json. Автоматически выбирает получателя по умолчанию (salomanov@ya.ru).
+    ~/.gemini/config/email_settings.json. Автоматически выбирает получателя по умолчанию (recipient@example.com).
 .PARAMETER Subject
     Тема письма.
 .PARAMETER Body

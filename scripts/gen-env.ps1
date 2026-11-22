@@ -9,7 +9,7 @@ $env:PYTHONIOENCODING = "utf-8"
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
 # 0. Нормализация пути
-if ($ProjectPath -and (Test-Path $ProjectPath)) {
+if ($ProjectPath -and (Test-Path -LiteralPath $ProjectPath)) {
     $ProjectPath = (Resolve-Path $ProjectPath).Path
 }
 

@@ -33,85 +33,19 @@ $env:PYTHONIOENCODING = "utf-8"
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
-# --- Mechanical Step Counter & Context Hygiene Guard (Project Guardian v1.7.10) ---
-function Get-ActiveSessionStepCount {
-    [CmdletBinding()]
-    param(
-        [string]$TargetConversationId = "",
-        [int]$Threshold = 180
-    )
-
-    $resolvedId = $TargetConversationId
-    if (-not $resolvedId) {
-        foreach ($varName in @('ANTIGRAVITY_CONVERSATION_ID', 'GEMINI_CONVERSATION_ID', 'CONVERSATION_ID')) {
-            $val = [Environment]::GetEnvironmentVariable($varName)
-            if ($val) {
-                $resolvedId = $val.Trim()
-                break
-            }
-        }
+# --- Mechanical Step Counter & Context Hygiene Guard (v2.2: считаем ШАГИ, а не строки лога) ---
+$sessionGuardLib = Join-Path $PSScriptRoot 'session-guard.ps1'
+if (Test-Path -LiteralPath $sessionGuardLib -PathType Leaf) {
+    . $sessionGuardLib
+} else {
+    # Библиотека недоступна: счетчик молчит, чтобы не выдавать ложных тревог
+    function Get-ActiveSessionStepCount {
+        param([string]$TargetConversationId = "", [int]$Threshold = 180, [string]$ProjectPath = "", [switch]$NoWarn)
+        return 0
     }
-
-    $brainRoot = Join-Path $HOME '.gemini/antigravity/brain'
-
-    if (-not $resolvedId) {
-        if (Test-Path -LiteralPath $brainRoot -PathType Container) {
-            $cutoff = (Get-Date).AddSeconds(-60)
-            $freshSession = Get-ChildItem -LiteralPath $brainRoot -Directory -ErrorAction SilentlyContinue |
-                ForEach-Object {
-                    $tPath = Join-Path $_.FullName '.system_generated/logs/transcript.jsonl'
-                    if (Test-Path -LiteralPath $tPath -PathType Leaf) {
-                        $fi = Get-Item -LiteralPath $tPath
-                        if ($fi.LastWriteTime -ge $cutoff) {
-                            [pscustomobject]@{ Id = $_.Name; LastWriteTime = $fi.LastWriteTime }
-                        }
-                    }
-                } | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-
-            if ($freshSession) {
-                $resolvedId = $freshSession.Id
-            }
-        }
-    }
-
-    if (-not $resolvedId) { return 0 }
-
-    $transcript = Join-Path (Join-Path $brainRoot $resolvedId) '.system_generated/logs/transcript.jsonl'
-    if (-not (Test-Path -LiteralPath $transcript -PathType Leaf)) { return 0 }
-
-    $stepCount = 0
-    $reader = $null
-    try {
-        $reader = [System.IO.StreamReader]::new($transcript)
-        while ($null -ne $reader.ReadLine()) { $stepCount++ }
-    }
-    catch { return 0 }
-    finally { if ($null -ne $reader) { $reader.Dispose() } }
-
-    if ($stepCount -ge $Threshold) {
-        $w = 78
-        $border = '#' * $w
-        $row = '#   {0,-72} #'
-
-        Write-Host ''
-        Write-Host $border -ForegroundColor Red
-        Write-Host ($row -f '') -ForegroundColor Red
-        Write-Host ($row -f '!!! MECHANICAL STEP COUNTER :: CONTEXT HYGIENE GUARD !!!') -ForegroundColor Red
-        Write-Host ($row -f '') -ForegroundColor Red
-        Write-Host ($row -f "Сессия: $resolvedId") -ForegroundColor Red
-        Write-Host ($row -f "Шагов в логе: $stepCount (порог перегрузки >= $Threshold)") -ForegroundColor Red
-        Write-Host ($row -f '') -ForegroundColor Red
-        Write-Host ($row -f '>>> ВНИМАНИЕ: СРОЧНО ЗАПУСТИТЬ prepare-handoff.ps1 И СМЕНИТЬ ДИАЛОГ! <<<') -ForegroundColor Red
-        Write-Host ($row -f 'Во избежание когнитивной деградации агента продолжите работу в новом чате.') -ForegroundColor Red
-        Write-Host ($row -f '') -ForegroundColor Red
-        Write-Host $border -ForegroundColor Red
-        Write-Host ''
-    }
-
-    return $stepCount
 }
 
-$activeSteps = Get-ActiveSessionStepCount -TargetConversationId $ConversationId
+$activeSteps = Get-ActiveSessionStepCount -TargetConversationId $ConversationId -ProjectPath $ProjectPath
 
 # --- Locate project root and file list -----------------------------------
 
@@ -188,7 +122,12 @@ $rules = @(
        Message = 'wildcard CORS on an API' },
     @{ Id = 'SEC-017'; Type = 'anti'; Glob = '*'
        Pattern = 'rejectUnauthorized\s*:\s*false|InsecureSkipVerify\s*:\s*true'
-       Message = 'TLS verification disabled' }
+       Message = 'TLS verification disabled' },
+
+    # PS-001 (регрессия #16): Test-Path без -LiteralPath падает WildcardPatternException на путях с [ ]
+    @{ Id = 'PS-001'; Type = 'anti'; Glob = '*.ps1'
+       Pattern = 'Test-Path\s+(?!-LiteralPath\b)'
+       Message = 'Test-Path without -LiteralPath crashes on paths containing [ ] (WildcardPatternException)' }
 )
 
 $secretFileNames = @('\.env$', '\.env\.[a-z]+$', '\.pem$', '\.pfx$', '\.p12$',
@@ -202,27 +141,67 @@ if (-not (Test-Path -LiteralPath $allowFile) -and $gitRoot) {
 }
 
 $allow = @()
+$allowWarnings = @()
 if (Test-Path -LiteralPath $allowFile) {
-    foreach ($line in Get-Content -LiteralPath $allowFile -Encoding UTF8) {
+    $allowLineNo = 0
+    foreach ($line in (Get-Content -LiteralPath $allowFile -Encoding UTF8)) {
+        $allowLineNo++
         $trimmed = $line.Trim()
         if (-not $trimmed -or $trimmed.StartsWith('#')) { continue }
+
         $reason = ''
-        $pattern = $trimmed
-        if ($trimmed.Contains('#')) {
-            $pattern = $trimmed.Substring(0, $trimmed.IndexOf('#')).Trim()
-            $reason = $trimmed.Substring($trimmed.IndexOf('#') + 1).Trim()
+        $spec = $trimmed
+        $hashPos = $spec.IndexOf('#')
+        if ($hashPos -ge 0) {
+            $reason = $spec.Substring($hashPos + 1).Trim()
+            $spec = $spec.Substring(0, $hashPos).Trim()
         }
-        if ($pattern) { $allow += [pscustomobject]@{ Pattern = $pattern; Reason = $reason } }
+        if (-not $spec) { continue }
+
+        # Строгий формат v2.2: "<RULE-ID> <путь[:строка]> # причина"
+        $m = [regex]::Match($spec, '^(?<rule>[A-Z]{2,4}-\d{3})\s+(?<path>.+?)(?::(?<line>\d+))?$')
+        if ($m.Success -and $reason) {
+            $lineNum = 0
+            if ($m.Groups['line'].Success) { $lineNum = [int]$m.Groups['line'].Value }
+            $allow += [pscustomobject]@{
+                Rule   = $m.Groups['rule'].Value
+                Path   = $m.Groups['path'].Value.Trim()
+                Line   = $lineNum
+                Reason = $reason
+                Strict = $true
+                Source = "${allowFile}:$allowLineNo"
+            }
+        } else {
+            # Устаревший формат (подстрока) — поддерживаем для чужих проектов, но предупреждаем
+            $allow += [pscustomobject]@{
+                Rule = ''; Path = $spec; Line = 0; Reason = $reason; Strict = $false
+                Source = "${allowFile}:$allowLineNo"
+            }
+            $allowWarnings += "устаревшая запись без ID правила и причины (нужно '<RULE-ID> <путь[:строка]> # причина'): $spec"
+        }
     }
 }
 
-function Test-Excused([string]$ruleId, [string]$text) {
+function Test-Excused([string]$ruleId, [string]$fileName, [int]$lineNo, [string]$text) {    $normName = $fileName -replace '\\', '/'
     foreach ($entry in $allow) {
-        if ($text -like "*$($entry.Pattern)*" -or $ruleId -eq $entry.Pattern) {
-            return $entry
+        if ($entry.Strict) {
+            if ($entry.Rule -ne $ruleId) { continue }
+            if ($entry.Line -gt 0 -and $entry.Line -ne $lineNo) { continue }
+            $pattern = $entry.Path -replace '\\', '/'
+            if ($pattern -match '[*?]') {
+                if ($normName -like $pattern) { return $entry }
+            } elseif ($normName -eq $pattern) {
+                return $entry
+            }
+        } else {
+            if ($text -like "*$($entry.Path)*" -or $ruleId -eq $entry.Path) { return $entry }
         }
     }
     return $null
+}
+
+foreach ($w in $allowWarnings) {
+    Write-Host "[gate] ⚠️ $w" -ForegroundColor DarkYellow
 }
 
 # --- Scan ---------------------------------------------------------------
@@ -240,7 +219,7 @@ foreach ($name in $files) {
     } else {
         foreach ($namePattern in $secretFileNames) {
             if ($name -match $namePattern) {
-                $ex = Test-Excused 'SEC-005' $name
+                $ex = Test-Excused 'SEC-005' $name 0 $name
                 if ($ex) {
                     $excused += [pscustomobject]@{ Id = 'SEC-005'; File = $name; Line = 0
                         Text = "sensitive file tracked by git: $name"; Reason = $ex.Reason }
@@ -279,7 +258,7 @@ foreach ($name in $files) {
                 Id = $rule.Id; File = $name; Line = ($i + 1)
                 Text = $line.Trim(); Message = $rule.Message
             }
-            $why = Test-Excused $rule.Id $line
+            $why = Test-Excused $rule.Id $name ($i + 1) $line
             if ($why) { $entry | Add-Member -NotePropertyName Reason -NotePropertyValue $why.Reason
                         $excused += $entry } else { $findings += $entry }
         }
@@ -302,7 +281,7 @@ if (Test-Path -LiteralPath $recFile -PathType Leaf) {
                     Id = 'REC-001'; File = 'AGENT_RECOMMENDATIONS.md'; Line = ($i + 1)
                     Text = $rl.Trim(); Message = 'completed [x] items in AGENT_RECOMMENDATIONS.md must be archived to docs/APPLIED_RECOMMENDATIONS.md'
                 }
-                $why = Test-Excused 'REC-001' $rl
+                $why = Test-Excused 'REC-001' 'AGENT_RECOMMENDATIONS.md' ($i + 1) $rl
                 if ($why) { $entry | Add-Member -NotePropertyName Reason -NotePropertyValue $why.Reason
                             $excused += $entry } else { $findings += $entry }
             }
@@ -348,8 +327,20 @@ if (-not $SkipSyntax) {
             } catch {}
         }
 
-        if ($ext -eq '.py' -and $python) {
-            & $python.Source -m py_compile $full 2>&1 | Out-Null
+        # PS-002: .ps1 обязан быть UTF-8 с BOM (иначе PowerShell 5.1 читает его как ANSI и ломает парсер на кириллице)
+        if ($ext -eq '.ps1') {
+            try {
+                $stream = [System.IO.File]::OpenRead($full)
+                $hdr = New-Object byte[] 3
+                $read = $stream.Read($hdr, 0, 3)
+                $stream.Dispose()
+                if (-not ($read -eq 3 -and $hdr[0] -eq 0xEF -and $hdr[1] -eq 0xBB -and $hdr[2] -eq 0xBF)) {
+                    $syntaxFailures += "bom: $name (.ps1 without UTF-8 BOM is read as ANSI by PowerShell 5.1; Cyrillic breaks the parser. Re-save as UTF-8 with BOM)"
+                }
+            } catch {}
+        }
+
+        if ($ext -eq '.py' -and $python) {            & $python.Source -m py_compile $full 2>&1 | Out-Null
             if ($LASTEXITCODE -ne 0) { $syntaxFailures += "python: $name" }
         }
         elseif ($ext -eq '.js' -and $node) {

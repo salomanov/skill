@@ -11,13 +11,13 @@ $env:PYTHONIOENCODING = "utf-8"
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
 # 0. Нормализация пути и поддержка подпроектов
-if ($ProjectPath -and (Test-Path $ProjectPath)) {
+if ($ProjectPath -and (Test-Path -LiteralPath $ProjectPath)) {
     $ProjectPath = (Resolve-Path $ProjectPath).Path
 }
 
 if ($SubProject) {
     $cand = Join-Path $ProjectPath $SubProject
-    if (Test-Path $cand) {
+    if (Test-Path -LiteralPath $cand) {
         $ProjectPath = (Resolve-Path $cand).Path
         Write-Host "[Project Guardian] 🎯 Выбран подпроект: $ProjectPath" -ForegroundColor Cyan
     }
@@ -29,7 +29,7 @@ Write-Host "Проект: $ProjectPath"
 $backupRoot = Join-Path $ProjectPath ".backups"
 
 # 1. Поиск контрольных точек и бэкапов всех типов
-if (-not (Test-Path $backupRoot)) {
+if (-not (Test-Path -LiteralPath $backupRoot)) {
     Write-Host "Папка .backups отсутствует в $ProjectPath. Нет доступных точек восстановления." -ForegroundColor Gray
     return
 }
@@ -94,7 +94,7 @@ try {
     $artifactDirs = @("firmware_binaries", "desktop_binaries", "web_artifacts")
     foreach ($ad in $artifactDirs) {
         $fullAd = Join-Path $selectedCheckpoint.FullName $ad
-        if (Test-Path $fullAd) {
+        if (Test-Path -LiteralPath $fullAd) {
             Write-Host "  [Артефакты сборки сохранены в]: $fullAd" -ForegroundColor Magenta
         }
     }

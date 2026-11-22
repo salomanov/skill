@@ -38,12 +38,12 @@ $env:PYTHONIOENCODING = "utf-8"
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
 # 0. Нормализация пути
-if ($ProjectPath -and (Test-Path $ProjectPath)) {
+if ($ProjectPath -and (Test-Path -LiteralPath $ProjectPath)) {
     $ProjectPath = (Resolve-Path $ProjectPath).Path
 }
 
 $scratchDir = Join-Path $ProjectPath "scratch"
-if (-not (Test-Path $scratchDir)) {
+if (-not (Test-Path -LiteralPath $scratchDir)) {
     New-Item -ItemType Directory -Path $scratchDir -Force | Out-Null
 }
 
@@ -53,7 +53,7 @@ $cleanName = $Name -replace '(\.py|\.ps1)$', ''
 $cleanName = $cleanName -replace '[^\w\-]', '_'
 $targetFile = Join-Path $scratchDir "$cleanName$ext"
 
-if ((Test-Path $targetFile) -and (-not $Force)) {
+if ((Test-Path -LiteralPath $targetFile) -and (-not $Force)) {
     Write-Warning "Файл уже существует: $targetFile (используйте -Force для перезаписи)"
     return
 }

@@ -32,6 +32,7 @@ Write-Host "Проект: $ProjectPath`n"
 
 $dimensionScore = 0
 $totalDimensions = 8
+$blockers = 0
 
 function Report-Dim {
     param(
@@ -61,11 +62,9 @@ if (Test-Path -LiteralPath $agentsFile) {
         $dimensionScore++
     } else {
         Report-Dim 1 "System Prompts" "WARN" "AGENTS.md обнаружен, но отсутствуют ключевые маркеры правил"
-        $dimensionScore++
     }
 } else {
     Report-Dim 1 "System Prompts" "WARN" "Глобальный AGENTS.md не найден (используются системные промпты хоста)"
-    $dimensionScore++
 }
 
 # 2. Tools
@@ -76,6 +75,7 @@ if ((Test-Path -LiteralPath $guardianRoot) -or (Test-Path -LiteralPath $guardian
     $dimensionScore++
 } else {
     Report-Dim 2 "Tools" "FAIL" "Фасад guardian.ps1 отсутствует в проекте"
+    $blockers++
 }
 
 # 3. Memory
@@ -84,14 +84,21 @@ $graphJson = Join-Path $ProjectPath "graphify-out\graph.json"
 $hasState = (Test-Path -LiteralPath $stateFile)
 $hasGraph = (Test-Path -LiteralPath $graphJson)
 
-if ($hasState -and $hasGraph) {
-    Report-Dim 3 "Memory" "OK" "PROJECT_STATE.md актуален + граф знаний Graphify построен"
-    $dimensionScore++
-} elseif ($hasState) {
-    Report-Dim 3 "Memory" "OK" "PROJECT_STATE.md актуален (граф Graphify обновится при следующем checkpoint)"
-    $dimensionScore++
+if ($hasState) {
+    $stateAge = ((Get-Date) - (Get-Item -LiteralPath $stateFile).LastWriteTime).TotalDays
+    $stateText = ''
+    try { $stateText = [System.IO.File]::ReadAllText($stateFile, [System.Text.Encoding]::UTF8) } catch { }
+    $hasVersion = ($stateText -match '(?m)^-\s*\*\*(Версия|Version)\*\*')
+    $graphNote = if ($hasGraph) { 'граф Graphify построен' } else { 'граф Graphify отсутствует (обновится при следующем checkpoint)' }
+    if ($hasVersion -and $stateAge -le 30) {
+        Report-Dim 3 "Memory" "OK" ("PROJECT_STATE.md актуален ({0:N0} дн.), версия зафиксирована, {1}" -f $stateAge, $graphNote)
+        $dimensionScore++
+    } else {
+        Report-Dim 3 "Memory" "WARN" ("PROJECT_STATE.md устарел или без версии (возраст {0:N0} дн.); {1}" -f $stateAge, $graphNote)
+    }
 } else {
     Report-Dim 3 "Memory" "FAIL" "Долговременная память PROJECT_STATE.md отсутствует"
+    $blockers++
 }
 
 # 4. Guardrails
@@ -100,10 +107,19 @@ if (-not (Test-Path -LiteralPath $gateScript)) {
     $gateScript = Join-Path $HOME ".gemini\config\skills\project-guardian\scripts\security-gate.ps1"
 }
 if (Test-Path -LiteralPath $gateScript) {
-    Report-Dim 4 "Guardrails" "OK" "Исполняемый Security Gate (security-gate.ps1) активен"
-    $dimensionScore++
+    $gateOut = (& powershell -NoProfile -ExecutionPolicy Bypass -File $gateScript -ProjectPath $ProjectPath -SkipSyntax 2>&1) | Out-String
+    $gateExit = $LASTEXITCODE
+    if ($gateExit -eq 0) {
+        Report-Dim 4 "Guardrails" "OK" "Security Gate выполнен на проекте: находок нет (exit 0)"
+        $dimensionScore++
+    } else {
+        $firstFail = ($gateOut -split "`r?`n" | Where-Object { $_ -match '\[FAIL\]' } | Select-Object -First 1)
+        Report-Dim 4 "Guardrails" "FAIL" ("Security Gate валит проект (exit {0}): {1}" -f $gateExit, $firstFail)
+        $blockers++
+    }
 } else {
     Report-Dim 4 "Guardrails" "FAIL" "Скрипт security-gate.ps1 не найден"
+    $blockers++
 }
 
 # 5. Scripts
@@ -118,7 +134,6 @@ if ($foundScripts -ge 5) {
     $dimensionScore++
 } else {
     Report-Dim 5 "Scripts" "WARN" "Найдено утилит: $foundScripts из $($coreScripts.Count)"
-    $dimensionScore++
 }
 
 # 6. Skills
@@ -126,12 +141,21 @@ $skillsDir = Join-Path $HOME ".gemini\config\skills"
 if (Test-Path -LiteralPath $skillsDir) {
     $installedSkills = @(Get-ChildItem -LiteralPath $skillsDir -Directory -ErrorAction SilentlyContinue)
     $hasPG = (Test-Path -LiteralPath (Join-Path $skillsDir "project-guardian"))
-    if ($hasPG) {
-        Report-Dim 6 "Skills" "OK" "Установлено скиллов: $($installedSkills.Count), project-guardian синхронизирован"
-        $dimensionScore++
+    $installedSkillFile = Join-Path $skillsDir "project-guardian\SKILL.md"
+    $localSkillFile = Join-Path $ProjectPath "SKILL.md"
+    if ($hasPG -and (Test-Path -LiteralPath $installedSkillFile) -and (Test-Path -LiteralPath $localSkillFile)) {
+        $hLocal = (Get-FileHash -LiteralPath $localSkillFile -Algorithm SHA256).Hash
+        $hInstalled = (Get-FileHash -LiteralPath $installedSkillFile -Algorithm SHA256).Hash
+        if ($hLocal -eq $hInstalled) {
+            Report-Dim 6 "Skills" "OK" "Установлено скиллов: $($installedSkills.Count), project-guardian синхронизирован (SKILL.md совпадает)"
+            $dimensionScore++
+        } else {
+            Report-Dim 6 "Skills" "WARN" "project-guardian установлен, но SKILL.md рассинхронизирован с репозиторием (обновите копию в ~/.gemini/config/skills)"
+        }
+    } elseif ($hasPG) {
+        Report-Dim 6 "Skills" "WARN" "Каталог project-guardian есть, но SKILL.md не найден — копия неполная"
     } else {
         Report-Dim 6 "Skills" "WARN" "Установлено скиллов: $($installedSkills.Count), но project-guardian не найден глобально"
-        $dimensionScore++
     }
 } else {
     Report-Dim 6 "Skills" "WARN" "Каталог скиллов ~/.gemini/config/skills не обнаружен"
@@ -150,16 +174,32 @@ if (Test-Path -LiteralPath $handoffScript) {
 }
 
 # 8. Control Hooks
-$detailsHook = "Счетчик шагов (150-200), No-Polling и Reactive Wakeup активны"
-Report-Dim 8 "Control Hooks" "OK" $detailsHook
-$dimensionScore++
+$hookLib = Join-Path $ProjectPath "scripts\session-guard.ps1"
+if (Test-Path -LiteralPath $hookLib) {
+    . $hookLib
+    $steps = Get-ActiveSessionStepCount -ProjectPath $ProjectPath -NoWarn
+    if ($steps -le 0) {
+        Report-Dim 8 "Control Hooks" "WARN" "Счетчик шагов активен, но сессию определить не удалось (нет ID в окружении и нет свежего лога проекта): тревог не будет, контроля тоже"
+    } elseif ($steps -ge 180) {
+        Report-Dim 8 "Control Hooks" "WARN" "Сессия перегружена: $steps шагов (порог 180) — требуется prepare-handoff.ps1 и новый диалог"
+    } else {
+        Report-Dim 8 "Control Hooks" "OK" "Счетчик шагов работает: $steps шагов в активной сессии (порог 180), No-Polling и Reactive Wakeup активны"
+        $dimensionScore++
+    }
+} else {
+    Report-Dim 8 "Control Hooks" "FAIL" "Библиотека счетчика шагов scripts/session-guard.ps1 не найдена"
+    $blockers++
+}
 
 # Итог
 Write-Host ("`n" + ("=" * 60))
-if ($dimensionScore -eq $totalDimensions) {
+if ($blockers -gt 0) {
+    Write-Host "ИТОГ: Есть блокеры ($blockers). Измерений в норме: $dimensionScore/$totalDimensions.`n" -ForegroundColor Red
+    exit 1
+} elseif ($dimensionScore -eq $totalDimensions) {
     Write-Host "ИТОГ: Обвязка полностью сбалансирована ($dimensionScore/$totalDimensions измерений в норме, 0 блокеров).`n" -ForegroundColor Green
     exit 0
 } else {
-    Write-Host "ИТОГ: Обнаружены дефициты обвязки ($dimensionScore/$totalDimensions измерений в норме).`n" -ForegroundColor Yellow
+    Write-Host "ИТОГ: Обнаружены дефициты обвязки ($dimensionScore/$totalDimensions измерений в норме, 0 блокеров).`n" -ForegroundColor Yellow
     if ($Strict) { exit 1 } else { exit 0 }
 }

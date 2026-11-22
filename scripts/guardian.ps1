@@ -72,10 +72,12 @@ $CommandMap = @{
     'prb'          = 'probe-skill.ps1'
     'harness'      = 'audit-harness.ps1'
     'hrn'          = 'audit-harness.ps1'
+    'steps'        = 'session-steps.ps1'
+    'stp'          = 'session-steps.ps1'
 }
 
 function Show-GuardianHelp {
-    Write-Host "`n🛡️ Project Guardian v2.1 CLI (Universal Facade)" -ForegroundColor Cyan
+    Write-Host "`n🛡️ Project Guardian v2.2 CLI (Universal Facade)" -ForegroundColor Cyan
     Write-Host "Использование: guardian.ps1 <команда> [параметры...]" -ForegroundColor White
     Write-Host "`nДоступные команды:" -ForegroundColor Yellow
     
@@ -86,6 +88,7 @@ function Show-GuardianHelp {
         [PSCustomObject]@{ Команда = 'test (tests)'; Описание = 'Автопоиск и запуск тестовых фреймворков (pytest, npm test, unittest)' },
         [PSCustomObject]@{ Команда = 'probe (prb)'; Описание = 'Зондирование скилла (Harness² Probe) на совместимость с Windows и безопасность' },
         [PSCustomObject]@{ Команда = 'harness (hrn)'; Описание = 'Комплексный аудит 8 измерений обвязки агента (Harness² Audit)' },
+        [PSCustomObject]@{ Команда = 'steps (stp)'; Описание = 'Счетчик шагов активной сессии и контроль перегрузки контекста' },
         [PSCustomObject]@{ Команда = 'rollback (rb)'; Описание = 'Откат к контрольной точке или просмотр списка (-List)' },
         [PSCustomObject]@{ Команда = 'failure (record, fail)'; Описание = 'Фиксация сбоя/инцидента в docs/ERRORS_AND_FAILURES.md' },
         [PSCustomObject]@{ Команда = 'handoff'; Описание = 'Подготовка контекста для передачи в новый диалог (.agents/HANDOFF.md)' },
@@ -108,6 +111,7 @@ function Show-GuardianHelp {
     Write-Host "  .\guardian.ps1 gate" -ForegroundColor Gray
     Write-Host "  .\guardian.ps1 test" -ForegroundColor Gray
     Write-Host "  .\guardian.ps1 rollback -List" -ForegroundColor Gray
+    Write-Host "  .\guardian.ps1 steps" -ForegroundColor Gray
     Write-Host "  .\guardian.ps1 failure -Title `"OOM`" -Symptom `"Краш`" -RootCause `"Лимит памяти`" -Solution `"Swap`"" -ForegroundColor Gray
     Write-Host "  .\guardian.ps1 recommend -Skill router-ops -Title `"Новый профиль`" -Problem `"Сбои`" -Solution `"Тюнинг`"" -ForegroundColor Gray
     Write-Host "  .\guardian.ps1 handoff -NextGoal `"Продолжить рефакторинг`"`
