@@ -40,7 +40,7 @@ if (Test-Path -LiteralPath $sessionGuardLib -PathType Leaf) {
 } else {
     # Библиотека недоступна: счетчик молчит, чтобы не выдавать ложных тревог
     function Get-ActiveSessionStepCount {
-        param([string]$TargetConversationId = "", [int]$Threshold = 180, [string]$ProjectPath = "", [switch]$NoWarn)
+        param([string]$TargetConversationId = "", [int]$Threshold = 500, [string]$ProjectPath = "", [switch]$NoWarn)
         return 0
     }
 }

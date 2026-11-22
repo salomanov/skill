@@ -1,7 +1,7 @@
 # Graph Report - Skill  (2026-11-22)
 
 ## Corpus Check
-- 23 files · ~30,994 words
+- 23 files · ~31,165 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 3 file(s) not represented in the graph (top: (none) 3)
 
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `905e3795`
+- Built from commit: `a6764d5f`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -34,26 +34,26 @@
 ## God Nodes (most connected - your core abstractions)
 1. `run_ps()` - 30 edges
 2. `make_project()` - 10 edges
-3. `secret_line()` - 6 edges
-4. `make_transcript()` - 6 edges
-5. `get_dialog_title()` - 6 edges
-6. `set_dialog_title()` - 6 edges
-7. `test_gate_detects_test_path_without_literalpath()` - 5 edges
-8. `test_gate_allowlist_strict_entry_is_narrow()` - 5 edges
-9. `test_gate_allowlist_legacy_entry_warns()` - 5 edges
-10. `main()` - 5 edges
+3. `get_dialog_title()` - 6 edges
+4. `set_dialog_title()` - 6 edges
+5. `make_transcript()` - 6 edges
+6. `secret_line()` - 6 edges
+7. `main()` - 5 edges
+8. `match_workspace()` - 5 edges
+9. `send_email()` - 5 edges
+10. `test_gate_allowlist_legacy_entry_warns()` - 5 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `run_ps()` --references--> `Path`  [EXTRACTED]
-  tests/test_guardian.py →   _Bridges community 18 → community 6_
+- `test_gate_detects_curl_pipe_sh()` --calls--> `make_project()`  [EXTRACTED]
+  tests/test_guardian.py → tests/test_guardian.py  _Bridges community 6 → community 18_
+- `load_config()` --calls--> `json`  [EXTRACTED]
+  scripts/send-email.py →   _Bridges community 1 → community 0_
 - `test_checkpoint_and_rollback_roundtrip()` --calls--> `run_ps()`  [EXTRACTED]
   tests/test_guardian.py → tests/test_guardian.py  _Bridges community 18 → community 26_
 - `test_harness_detects_broken_guardian_tool()` --calls--> `run_ps()`  [EXTRACTED]
   tests/test_guardian.py → tests/test_guardian.py  _Bridges community 18 → community 29_
 - `test_harness_detects_broken_script_syntax()` --calls--> `run_ps()`  [EXTRACTED]
   tests/test_guardian.py → tests/test_guardian.py  _Bridges community 18 → community 30_
-- `test_harness_reports_blockers()` --calls--> `run_ps()`  [EXTRACTED]
-  tests/test_guardian.py → tests/test_guardian.py  _Bridges community 18 → community 28_
 
 ## Import Cycles
 - None detected.
@@ -90,5 +90,5 @@ _Questions this graph is uniquely positioned to answer:_
   _High betweenness centrality (0.064) - this node is a cross-community bridge._
 - **Why does `secret_line()` connect `make_project` to `test_guardian.py`?**
   _High betweenness centrality (0.013) - this node is a cross-community bridge._
-- **Why does `test_gate_allowlist_strict_entry_is_narrow()` connect `make_project` to `test_guardian.py`?**
+- **Why does `test_gate_allowlist_legacy_entry_warns()` connect `make_project` to `test_guardian.py`?**
   _High betweenness centrality (0.012) - this node is a cross-community bridge._

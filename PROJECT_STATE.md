@@ -161,6 +161,8 @@
 
 ## 5. История Изменений
 
+- 🛡️ **Чекпоинт** [2026-11-22 17:55:01] (метка: 2026-11-22_17-55-01): v2.3.1: Step counter threshold calibration (500 steps, user/model/trajectory differentiation)
+
 - 🛡️ **Чекпоинт** [2026-11-22 17:45:56] (метка: 2026-11-22_17-45-56): v2.3.0: Honest Harness, Context Hygiene and Modular Skill Suite
 
 > 📜 **Архив изменений**: Полная история чекпоинтов и релизов версий v1.1.0 – v1.8.1 архивирована в [docs/HISTORICAL_STATES.md](docs/HISTORICAL_STATES.md).

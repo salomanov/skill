@@ -15,7 +15,7 @@
 
 param(
     [string]$ConversationId = "",
-    [int]$Threshold = 180,
+    [int]$Threshold = 500,
     [string]$ProjectPath = (Get-Location).Path,
     [string]$TranscriptPath = ""
 )
@@ -40,7 +40,24 @@ if ($steps -le 0) {
     exit 0
 }
 
-Write-Host "[steps] Шагов в сессии: $steps (порог перегрузки >= $Threshold)" -ForegroundColor Cyan
+$userTurns = 0
+$plannerSteps = 0
+if ($transcript -and (Test-Path -LiteralPath $transcript -PathType Leaf)) {
+    try {
+        $r = [System.IO.StreamReader]::new($transcript, [System.Text.Encoding]::UTF8)
+        while ($null -ne ($ln = $r.ReadLine())) {
+            if ($ln -match '"type"\s*:\s*"USER_INPUT"' -or $ln -match '"source"\s*:\s*"USER_EXPLICIT"') { $userTurns++ }
+            if ($ln -match '"type"\s*:\s*"PLANNER_RESPONSE"') { $plannerSteps++ }
+        }
+        $r.Dispose()
+    } catch {}
+}
+if ($userTurns -gt 0 -or $plannerSteps -gt 0) {
+    Write-Host "[steps] Сессия: $resolvedId" -ForegroundColor Cyan
+    Write-Host "[steps] Событий траектории: $steps (ходов пользователя: $userTurns, ответов модели: $plannerSteps) [порог: $Threshold]" -ForegroundColor Cyan
+} else {
+    Write-Host "[steps] Шагов в сессии: $steps (порог перегрузки >= $Threshold)" -ForegroundColor Cyan
+}
 if ($steps -ge $Threshold) {
     Write-Host "[steps] ПОРОГ ПРЕВЫШЕН: запустите prepare-handoff.ps1 и продолжите в новом диалоге." -ForegroundColor Red
     exit 1

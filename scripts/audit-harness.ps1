@@ -248,10 +248,10 @@ if (Test-Path -LiteralPath $hookLib) {
     $steps = Get-ActiveSessionStepCount -ProjectPath $ProjectPath -NoWarn
     if ($steps -le 0) {
         Report-Dim 8 "Control Hooks" "WARN" "Счетчик шагов активен, но сессию определить не удалось (нет ID в окружении и нет свежего лога проекта): тревог не будет, контроля тоже"
-    } elseif ($steps -ge 180) {
-        Report-Dim 8 "Control Hooks" "WARN" "Сессия перегружена: $steps шагов (порог 180) — требуется prepare-handoff.ps1 и новый диалог"
+    } elseif ($steps -ge 500) {
+        Report-Dim 8 "Control Hooks" "WARN" "Сессия перегружена: $steps шагов (порог 500) — требуется prepare-handoff.ps1 и новый диалог"
     } else {
-        Report-Dim 8 "Control Hooks" "OK" "Счетчик шагов работает: $steps шагов в активной сессии (порог 180), No-Polling и Reactive Wakeup активны"
+        Report-Dim 8 "Control Hooks" "OK" "Счетчик шагов работает: $steps шагов в активной сессии (порог 500), No-Polling и Reactive Wakeup активны"
         $dimensionScore++
     }
 } else {

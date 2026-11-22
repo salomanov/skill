@@ -14,7 +14,9 @@ All notable changes to Project Guardian are documented in this file.
 - **Защита от 8.3-путей Windows в Security Gate (`scripts/security-gate.ps1`)**:
   - Устранена критическая ошибка обрезания относительных путей (`Substring`) при несовпадении длины коротких (8.3 `SALOMA~1`) и канонических путей.
   - Переход на `(Get-Item -LiteralPath $ProjectPath).FullName`.
-- **Устойчивость счетчика шагов (`scripts/session-guard.ps1`)**:
+- **Устойчивость и калибровка счетчика шагов (`scripts/session-guard.ps1`, `scripts/session-steps.ps1`)**:
+  - Порог счетчика шагов повышен со 180 до 500 событий траектории с поддержкой переопределения через `$env:GUARDIAN_STEP_THRESHOLD`.
+  - Счетчик теперь дифференцирует события траектории (`step_index`), реплики модели (`PLANNER_RESPONSE`) и ходы пользователя (`USER_INPUT` / `USER_EXPLICIT`), исключая ложные панические баннеры при активной работе с инструментами.
   - При явном указании несуществующего `-TargetConversationId` скрипт тихо возвращает 0 и не подменяет чужую сессию эвристикой.
   - Эвристика активируется только для реально существующих на диске каталогов проектов (`Test-Path -LiteralPath $needle`).
 - **Модульная декомпозиция манифеста (`SKILL.md`)**:

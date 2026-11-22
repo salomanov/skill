@@ -23,11 +23,15 @@ function Get-ActiveSessionStepCount {
     [CmdletBinding()]
     param(
         [string]$TargetConversationId = "",
-        [int]$Threshold = 180,
+        [int]$Threshold = 500,
         [string]$ProjectPath = (Get-Location).Path,
         [string]$TranscriptPath = "",
         [switch]$NoWarn
     )
+
+        if ($env:GUARDIAN_STEP_THRESHOLD -and ($env:GUARDIAN_STEP_THRESHOLD -match '^\d+$')) {
+        $Threshold = [int]$env:GUARDIAN_STEP_THRESHOLD
+    }
 
     $brainRoot = Join-Path $HOME '.gemini/antigravity/brain'
     $transcriptName = Join-Path '.system_generated' (Join-Path 'logs' 'transcript.jsonl')
@@ -119,6 +123,8 @@ function Get-ActiveSessionStepCount {
     # Подсчет шагов: максимум step_index + 1 (fallback - число строк, если поля нет)
     $maxStep = -1
     $lineCount = 0
+    $userTurns = 0
+    $plannerSteps = 0
     $reader = $null
     try {
         $reader = [System.IO.StreamReader]::new($transcript, [System.Text.Encoding]::UTF8)
@@ -128,6 +134,12 @@ function Get-ActiveSessionStepCount {
             if ($m.Success) {
                 $v = [int]$m.Groups[1].Value
                 if ($v -gt $maxStep) { $maxStep = $v }
+            }
+            if ($line -match '"type"\s*:\s*"USER_INPUT"' -or $line -match '"source"\s*:\s*"USER_EXPLICIT"') {
+                $userTurns++
+            }
+            if ($line -match '"type"\s*:\s*"PLANNER_RESPONSE"') {
+                $plannerSteps++
             }
         }
     } catch { return 0 }
@@ -146,7 +158,8 @@ function Get-ActiveSessionStepCount {
         Write-Host ($row -f '!!! MECHANICAL STEP COUNTER :: CONTEXT HYGIENE GUARD !!!') -ForegroundColor Red
         Write-Host ($row -f '') -ForegroundColor Red
         Write-Host ($row -f "Сессия: $resolvedId") -ForegroundColor Red
-        Write-Host ($row -f "Шагов в сессии: $steps (порог перегрузки >= $Threshold)") -ForegroundColor Red
+        Write-Host ($row -f "Событий траектории: $steps (порог перегрузки >= $Threshold)") -ForegroundColor Red
+        Write-Host ($row -f "Ходов пользователя: $userTurns | Ответов модели: $plannerSteps") -ForegroundColor Red
         Write-Host ($row -f '') -ForegroundColor Red
         Write-Host ($row -f '>>> ВНИМАНИЕ: СРОЧНО ЗАПУСТИТЬ prepare-handoff.ps1 И СМЕНИТЬ ДИАЛОГ! <<<') -ForegroundColor Red
         Write-Host ($row -f 'Во избежание когнитивной деградации агента продолжите работу в новом чате.') -ForegroundColor Red

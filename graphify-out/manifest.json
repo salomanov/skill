@@ -72,9 +72,9 @@
     "semantic_hash": ""
   },
   "scripts/security-gate.ps1": {
-    "mtime": 1795351155.5750296,
-    "seen": 1795351559.2214277,
-    "ast_hash": "a0717a7d0d2a72e1868cb6bcfc5ccce4",
+    "mtime": 1795351911.8022933,
+    "seen": 1795352105.0754104,
+    "ast_hash": "4167229ca0e0956f03c72ad1ccc39803",
     "semantic_hash": ""
   },
   "scripts/send-email.ps1": {
@@ -96,9 +96,9 @@
     "semantic_hash": ""
   },
   ".agents/HANDOFF.md": {
-    "mtime": 1795350026.3464506,
-    "seen": 1795351559.2214406,
-    "ast_hash": "add3ad74e575ff4f5cc0aeac538ef852",
+    "mtime": 1795351569.8690767,
+    "seen": 1795352105.0754235,
+    "ast_hash": "a8a58b3366f95a1e238096aca2b04e18",
     "semantic_hash": ""
   },
   "AGENT_RECOMMENDATIONS.md": {
@@ -108,15 +108,15 @@
     "semantic_hash": ""
   },
   "CHANGELOG.md": {
-    "mtime": 1795351544.3475204,
-    "seen": 1795351559.2214448,
-    "ast_hash": "6e335124f181d69ea21c4151159e242a",
+    "mtime": 1795352088.0060372,
+    "seen": 1795352105.0754275,
+    "ast_hash": "11d8ec33c2afba2ad7797e3211b79db5",
     "semantic_hash": ""
   },
   "PROJECT_STATE.md": {
-    "mtime": 1795351556.5451913,
-    "seen": 1795351559.221447,
-    "ast_hash": "4a72d928c2e8068136a1a5adcba5dc0b",
+    "mtime": 1795352101.664209,
+    "seen": 1795352105.0754297,
+    "ast_hash": "f2f896b7787a46a496ba7a45d7766067",
     "semantic_hash": ""
   },
   "README.md": {
@@ -174,9 +174,9 @@
     "semantic_hash": ""
   },
   "scripts/audit-harness.ps1": {
-    "mtime": 1795350967.9110193,
-    "seen": 1795351559.2213893,
-    "ast_hash": "07d09e00b206e5639d70621be5fced6f",
+    "mtime": 1795351911.8022933,
+    "seen": 1795352105.0753717,
+    "ast_hash": "8a84343e25f86d0ca036cf9352756412",
     "semantic_hash": ""
   },
   "scripts/probe-skill.ps1": {
@@ -186,15 +186,15 @@
     "semantic_hash": ""
   },
   "scripts/session-guard.ps1": {
-    "mtime": 1795351417.7035334,
-    "seen": 1795351559.221434,
-    "ast_hash": "25f8bd5f2a56b69b37a4e4ff7167b2af",
+    "mtime": 1795351911.800303,
+    "seen": 1795352105.075417,
+    "ast_hash": "2a71854cf6b7f60b68276cc44c9974b3",
     "semantic_hash": ""
   },
   "scripts/session-steps.ps1": {
-    "mtime": 1795349003.2942474,
-    "seen": 1795350006.4302208,
-    "ast_hash": "62e0fbae2e17a0b4dc2c7b2aeb9b6696",
+    "mtime": 1795351911.8012934,
+    "seen": 1795352105.0754194,
+    "ast_hash": "18ed0451718acbda821158a46857c5ca",
     "semantic_hash": ""
   },
   "docs/HISTORICAL_STATES.md": {
