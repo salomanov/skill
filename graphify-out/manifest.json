@@ -72,9 +72,9 @@
     "semantic_hash": ""
   },
   "scripts/security-gate.ps1": {
-    "mtime": 1795348756.6200442,
-    "seen": 1795350006.4302125,
-    "ast_hash": "086308f8068e2935cd50ecb9c366b6a6",
+    "mtime": 1795351155.5750296,
+    "seen": 1795351559.2214277,
+    "ast_hash": "a0717a7d0d2a72e1868cb6bcfc5ccce4",
     "semantic_hash": ""
   },
   "scripts/send-email.ps1": {
@@ -96,9 +96,9 @@
     "semantic_hash": ""
   },
   ".agents/HANDOFF.md": {
-    "mtime": 1795293661.9209044,
-    "seen": 1795332052.6701431,
-    "ast_hash": "f0716f25f9d5e7dd255d429bf4ead96a",
+    "mtime": 1795350026.3464506,
+    "seen": 1795351559.2214406,
+    "ast_hash": "add3ad74e575ff4f5cc0aeac538ef852",
     "semantic_hash": ""
   },
   "AGENT_RECOMMENDATIONS.md": {
@@ -108,15 +108,15 @@
     "semantic_hash": ""
   },
   "CHANGELOG.md": {
-    "mtime": 1795349937.82665,
-    "seen": 1795350006.430229,
-    "ast_hash": "ef60aeea1e6e7bd19b591cb43160f791",
+    "mtime": 1795351544.3475204,
+    "seen": 1795351559.2214448,
+    "ast_hash": "6e335124f181d69ea21c4151159e242a",
     "semantic_hash": ""
   },
   "PROJECT_STATE.md": {
-    "mtime": 1795350002.7998497,
-    "seen": 1795350006.430231,
-    "ast_hash": "beab17b4ba60c5b5b2c1e89088ae225d",
+    "mtime": 1795351556.5451913,
+    "seen": 1795351559.221447,
+    "ast_hash": "4a72d928c2e8068136a1a5adcba5dc0b",
     "semantic_hash": ""
   },
   "README.md": {
@@ -126,9 +126,9 @@
     "semantic_hash": ""
   },
   "SKILL.md": {
-    "mtime": 1795348793.1172125,
-    "seen": 1795350006.4302347,
-    "ast_hash": "6e486ffb10a6ca297dde157a245cec24",
+    "mtime": 1795351271.4296916,
+    "seen": 1795351559.221451,
+    "ast_hash": "bb2403b76bd968ef6316afef85ba5b24",
     "semantic_hash": ""
   },
   "SKILL_REVIEW.md": {
@@ -168,15 +168,15 @@
     "semantic_hash": ""
   },
   "tests/test_guardian.py": {
-    "mtime": 1795349063.3476615,
-    "seen": 1795350006.4302227,
-    "ast_hash": "40bd250c79d7d099b448eb91972308c6",
+    "mtime": 1795351318.5561619,
+    "seen": 1795351559.2214386,
+    "ast_hash": "863e7fc85476894aadec21d04e9f5d75",
     "semantic_hash": ""
   },
   "scripts/audit-harness.ps1": {
-    "mtime": 1795348914.562534,
-    "seen": 1795350006.4301772,
-    "ast_hash": "eaf787f283eaa0768d5063faa18b6bd2",
+    "mtime": 1795350967.9110193,
+    "seen": 1795351559.2213893,
+    "ast_hash": "07d09e00b206e5639d70621be5fced6f",
     "semantic_hash": ""
   },
   "scripts/probe-skill.ps1": {
@@ -186,15 +186,45 @@
     "semantic_hash": ""
   },
   "scripts/session-guard.ps1": {
-    "mtime": 1795348941.3458955,
-    "seen": 1795350006.4302187,
-    "ast_hash": "0b49accbac9a6b2bca25464841ac93df",
+    "mtime": 1795351417.7035334,
+    "seen": 1795351559.221434,
+    "ast_hash": "25f8bd5f2a56b69b37a4e4ff7167b2af",
     "semantic_hash": ""
   },
   "scripts/session-steps.ps1": {
     "mtime": 1795349003.2942474,
     "seen": 1795350006.4302208,
     "ast_hash": "62e0fbae2e17a0b4dc2c7b2aeb9b6696",
+    "semantic_hash": ""
+  },
+  "docs/HISTORICAL_STATES.md": {
+    "mtime": 1795350823.2664173,
+    "seen": 1795351559.2214596,
+    "ast_hash": "53e42b1c428ccf5a25749f094e67cb00",
+    "semantic_hash": ""
+  },
+  "references/HARNESS2_PROBE.md": {
+    "mtime": 1795351234.280816,
+    "seen": 1795351559.221462,
+    "ast_hash": "a1c379432aca317f067ffbed007e6f5a",
+    "semantic_hash": ""
+  },
+  "references/MULTI_PROJECT_GUIDE.md": {
+    "mtime": 1795351234.280816,
+    "seen": 1795351559.2214634,
+    "ast_hash": "7ba25eac3ee11e07d924d9b0e1124456",
+    "semantic_hash": ""
+  },
+  "references/SELECTIVE_TDD.md": {
+    "mtime": 1795351234.2773094,
+    "seen": 1795351559.2214677,
+    "ast_hash": "18b9cb6c3fed0bf663477899634d91eb",
+    "semantic_hash": ""
+  },
+  "references/SEND_EMAIL.md": {
+    "mtime": 1795351234.2798152,
+    "seen": 1795351559.2214692,
+    "ast_hash": "12f5ee5e765ba3ec3a9602670d558530",
     "semantic_hash": ""
   }
 }

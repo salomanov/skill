@@ -4,12 +4,12 @@
 .DESCRIPTION
     Анализирует архитектурную целостность и здоровье всех 8 компонентов Harness²:
     1. System Prompts (Инварианты AGENTS.md, User Rules)
-    2. Tools (Единый CLI-фасад guardian.ps1)
+    2. Tools (Единый CLI-фасад guardian.ps1, исполнение help)
     3. Memory (Долговременная память PROJECT_STATE.md + граф знаний Graphify)
-    4. Guardrails (Исполняемый Security Gate security-gate.ps1, .security-gate-allow)
-    5. Scripts (Генераторы и скрипты автоматизации в scripts/)
-    6. Skills (Каталог установленных скиллов и наличие project-guardian)
-    7. Subagents & Boundary (Изоляция воркспейсов, prepare-handoff.ps1)
+    4. Guardrails (Исполняемый Security Gate security-gate.ps1 + негативный зонд)
+    5. Scripts (Утилиты автоматизации, AST-синтаксис, UTF-8 BOM)
+    6. Skills (Каталог установленных скиллов и синхронизация project-guardian)
+    7. Subagents & Boundary (Изоляция воркспейсов, prepare-handoff.ps1 AST)
     8. Control Hooks (Контекстная гигиена, счетчик шагов, No-Polling)
 #>
 
@@ -27,7 +27,7 @@ if ($ProjectPath -and (Test-Path -LiteralPath $ProjectPath)) {
     $ProjectPath = (Resolve-Path -LiteralPath $ProjectPath).Path
 }
 
-Write-Host "`n=== [Project Guardian] Аудит 8 Измерений Обвязки (Harness² Audit v2.1) ===" -ForegroundColor Cyan
+Write-Host "`n=== [Project Guardian] Аудит 8 Измерений Обвязки (Harness² Honest Audit v2.3) ===" -ForegroundColor Cyan
 Write-Host "Проект: $ProjectPath`n"
 
 $dimensionScore = 0
@@ -67,12 +67,20 @@ if (Test-Path -LiteralPath $agentsFile) {
     Report-Dim 1 "System Prompts" "WARN" "Глобальный AGENTS.md не найден (используются системные промпты хоста)"
 }
 
-# 2. Tools
+# 2. Tools (Проверяем реальное исполнение, а не просто существование)
 $guardianRoot = Join-Path $ProjectPath "guardian.ps1"
 $guardianScripts = Join-Path $ProjectPath "scripts\guardian.ps1"
-if ((Test-Path -LiteralPath $guardianRoot) -or (Test-Path -LiteralPath $guardianScripts)) {
-    Report-Dim 2 "Tools" "OK" "CLI-фасад guardian.ps1 активен и доступен"
-    $dimensionScore++
+$guardianTarget = if (Test-Path -LiteralPath $guardianRoot) { $guardianRoot } elseif (Test-Path -LiteralPath $guardianScripts) { $guardianScripts } else { $null }
+
+if ($guardianTarget) {
+    $helpOut = (& powershell -NoProfile -ExecutionPolicy Bypass -File $guardianTarget help 2>&1) | Out-String
+    if ($LASTEXITCODE -eq 0 -and ($helpOut -match 'Project Guardian')) {
+        Report-Dim 2 "Tools" "OK" "CLI-фасад guardian.ps1 проверен: исполняется штатно (exit 0)"
+        $dimensionScore++
+    } else {
+        Report-Dim 2 "Tools" "FAIL" ("Фасад guardian.ps1 аварийно завершился при вызове help (exit {0})" -f $LASTEXITCODE)
+        $blockers++
+    }
 } else {
     Report-Dim 2 "Tools" "FAIL" "Фасад guardian.ps1 отсутствует в проекте"
     $blockers++
@@ -101,17 +109,42 @@ if ($hasState) {
     $blockers++
 }
 
-# 4. Guardrails
+# 4. Guardrails (Проверяем как чистый проект, так и негативный зонд перехвата нарушений)
 $gateScript = Join-Path $ProjectPath "scripts\security-gate.ps1"
 if (-not (Test-Path -LiteralPath $gateScript)) {
     $gateScript = Join-Path $HOME ".gemini\config\skills\project-guardian\scripts\security-gate.ps1"
 }
 if (Test-Path -LiteralPath $gateScript) {
+    # 4.1 Прогон на проекте
     $gateOut = (& powershell -NoProfile -ExecutionPolicy Bypass -File $gateScript -ProjectPath $ProjectPath -SkipSyntax 2>&1) | Out-String
     $gateExit = $LASTEXITCODE
-    if ($gateExit -eq 0) {
-        Report-Dim 4 "Guardrails" "OK" "Security Gate выполнен на проекте: находок нет (exit 0)"
+
+    # 4.2 Негативный микро-зонд: убеждаемся, что гейт не заглушен и реально валит сборку
+    $probeWorks = $false
+    $probeDir = $null
+    try {
+        $probeDir = Join-Path $env:TEMP ("gate-probe-" + [guid]::NewGuid().ToString('N').Substring(0,8))
+        New-Item -ItemType Directory -Path $probeDir -Force | Out-Null
+        $badFile = Join-Path $probeDir "probe.py"
+        [System.IO.File]::WriteAllText($badFile, "password = ""SuperSecretP@ssword123""`n", [System.Text.Encoding]::UTF8)
+        $probeOut = (& powershell -NoProfile -ExecutionPolicy Bypass -File $gateScript -ProjectPath $probeDir -SkipSyntax 2>&1) | Out-String
+        if ($LASTEXITCODE -ne 0) {
+            $probeWorks = $true
+        }
+    } catch {
+        $probeWorks = $false
+    } finally {
+        if ($probeDir -and (Test-Path -LiteralPath $probeDir)) {
+            Remove-Item -LiteralPath $probeDir -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    if ($gateExit -eq 0 -and $probeWorks) {
+        Report-Dim 4 "Guardrails" "OK" "Security Gate проверен на проекте (exit 0) и подтвержден негативным зондом"
         $dimensionScore++
+    } elseif ($gateExit -eq 0 -and -not $probeWorks) {
+        Report-Dim 4 "Guardrails" "FAIL" "Security Gate НЕ перехватил дефектный тестовый секрет (гейт неработоспособен)"
+        $blockers++
     } else {
         $firstFail = ($gateOut -split "`r?`n" | Where-Object { $_ -match '\[FAIL\]' } | Select-Object -First 1)
         Report-Dim 4 "Guardrails" "FAIL" ("Security Gate валит проект (exit {0}): {1}" -f $gateExit, $firstFail)
@@ -122,18 +155,45 @@ if (Test-Path -LiteralPath $gateScript) {
     $blockers++
 }
 
-# 5. Scripts
+# 5. Scripts (Проверяем AST-синтаксис и UTF-8 BOM всех ключевых утилит)
 $scriptsDir = Join-Path $ProjectPath "scripts"
-$coreScripts = @("checkpoint.ps1", "rollback.ps1", "new-scratch.ps1", "doctor.ps1", "run-tests.ps1", "probe-skill.ps1")
+$coreScripts = @("checkpoint.ps1", "rollback.ps1", "new-scratch.ps1", "doctor.ps1", "run-tests.ps1", "probe-skill.ps1", "session-guard.ps1")
 $foundScripts = 0
-foreach ($s in $coreScripts) {
-    if (Test-Path -LiteralPath (Join-Path $scriptsDir $s)) { $foundScripts++ }
+$syntaxErrors = @()
+$bomMissing = @()
+
+if (Test-Path -LiteralPath $scriptsDir) {
+    foreach ($s in $coreScripts) {
+        $sFile = Join-Path $scriptsDir $s
+        if (Test-Path -LiteralPath $sFile) {
+            $foundScripts++
+            # Проверка синтаксиса AST
+            $parseErrors = $null
+            $tokens = $null
+            $null = [System.Management.Automation.Language.Parser]::ParseFile($sFile, [ref]$tokens, [ref]$parseErrors)
+            if ($parseErrors -and $parseErrors.Count -gt 0) {
+                $syntaxErrors += "$s ($($parseErrors.Count) errors)"
+            }
+            # Проверка UTF-8 BOM
+            $b = [System.IO.File]::ReadAllBytes($sFile)
+            if ($b.Length -lt 3 -or $b[0] -ne 0xEF -or $b[1] -ne 0xBB -or $b[2] -ne 0xBF) {
+                $bomMissing += $s
+            }
+        }
+    }
 }
-if ($foundScripts -ge 5) {
-    Report-Dim 5 "Scripts" "OK" "Утилиты автоматизации ($foundScripts/$($coreScripts.Count)) на месте"
+
+if ($syntaxErrors.Count -gt 0) {
+    Report-Dim 5 "Scripts" "FAIL" ("Синтаксические ошибки в скриптах: {0}" -f ($syntaxErrors -join ', '))
+    $blockers++
+} elseif ($bomMissing.Count -gt 0) {
+    Report-Dim 5 "Scripts" "WARN" ("Скрипты без UTF-8 BOM (риск краша в PowerShell 5.1): {0}" -f ($bomMissing -join ', '))
+    if ($Strict) { $blockers++ }
+} elseif ($foundScripts -ge 6) {
+    Report-Dim 5 "Scripts" "OK" ("Утилиты автоматизации ({0}/{1}) валидны (AST OK, UTF-8 BOM OK)" -f $foundScripts, $coreScripts.Count)
     $dimensionScore++
 } else {
-    Report-Dim 5 "Scripts" "WARN" "Найдено утилит: $foundScripts из $($coreScripts.Count)"
+    Report-Dim 5 "Scripts" "WARN" ("Найдено утилит: {0} из {1}" -f $foundScripts, $coreScripts.Count)
 }
 
 # 6. Skills
@@ -167,8 +227,16 @@ if (-not (Test-Path -LiteralPath $handoffScript)) {
     $handoffScript = Join-Path $HOME ".gemini\config\skills\project-guardian\scripts\prepare-handoff.ps1"
 }
 if (Test-Path -LiteralPath $handoffScript) {
-    Report-Dim 7 "Subagents" "OK" "Межпроектная изоляция и протокол передачи контекста (prepare-handoff) активны"
-    $dimensionScore++
+    $parseErrors = $null
+    $tokens = $null
+    $null = [System.Management.Automation.Language.Parser]::ParseFile($handoffScript, [ref]$tokens, [ref]$parseErrors)
+    if ($parseErrors -and $parseErrors.Count -gt 0) {
+        Report-Dim 7 "Subagents" "FAIL" "Скрипт prepare-handoff.ps1 содержит синтаксические ошибки"
+        $blockers++
+    } else {
+        Report-Dim 7 "Subagents" "OK" "Межпроектная изоляция и протокол передачи контекста (prepare-handoff) проверены (AST OK)"
+        $dimensionScore++
+    }
 } else {
     Report-Dim 7 "Subagents" "WARN" "Скрипт prepare-handoff.ps1 не найден"
 }

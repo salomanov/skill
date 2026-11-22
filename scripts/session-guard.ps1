@@ -50,25 +50,37 @@ function Get-ActiveSessionStepCount {
         }
     }
 
-    # 1-2. Явный ID или переменные окружения
+    # 1. Явный ID сессии (если задан и не найден - не подменяем эвристикой)
     if (-not $transcript) {
-        $resolvedId = $TargetConversationId
-        if ([string]::IsNullOrWhiteSpace($resolvedId)) {
-            foreach ($varName in @('ANTIGRAVITY_CONVERSATION_ID', 'GEMINI_CONVERSATION_ID', 'CONVERSATION_ID')) {
-                $val = [Environment]::GetEnvironmentVariable($varName)
-                if ($val) { $resolvedId = $val.Trim(); break }
-            }
+        if (-not [string]::IsNullOrWhiteSpace($TargetConversationId)) {
+            $transcript = Resolve-TranscriptPath $TargetConversationId.Trim()
+            if (-not $transcript) { return 0 }
+            $resolvedId = $TargetConversationId.Trim()
         }
-
-        $transcript = Resolve-TranscriptPath $resolvedId
     }
 
-    # 3. Эвристика: только свежий лог, где встречается путь проекта (в т.ч. JSON-экранированный)
+    # 2. Переменные окружения
+    if (-not $transcript) {
+        foreach ($varName in @('ANTIGRAVITY_CONVERSATION_ID', 'GEMINI_CONVERSATION_ID', 'CONVERSATION_ID')) {
+            $val = [Environment]::GetEnvironmentVariable($varName)
+            if ($val) {
+                $t = Resolve-TranscriptPath $val.Trim()
+                if ($t) {
+                    $transcript = $t
+                    $resolvedId = $val.Trim()
+                    break
+                }
+            }
+        }
+    }
+
+    # 3. Эвристика: только существующий проект на диске и свежий лог (<= 10 минут)
     if (-not $transcript) {
         if (-not (Test-Path -LiteralPath $brainRoot -PathType Container)) { return 0 }
         $cutoff = (Get-Date).AddMinutes(-10)
         $needle = ([string]$ProjectPath).TrimEnd('\', '/')
         if ([string]::IsNullOrWhiteSpace($needle)) { return 0 }
+        if (-not (Test-Path -LiteralPath $needle)) { return 0 }
 
         $variants = @(
             $needle,

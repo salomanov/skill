@@ -51,7 +51,7 @@ $activeSteps = Get-ActiveSessionStepCount -TargetConversationId $ConversationId 
 
 $scanDir = $ProjectPath
 if ($ProjectPath -and (Test-Path -LiteralPath $ProjectPath)) {
-    $scanDir = (Resolve-Path -LiteralPath $ProjectPath).Path
+    $scanDir = (Get-Item -LiteralPath $ProjectPath).FullName
 }
 
 $root = $scanDir
@@ -75,9 +75,10 @@ function Get-ProjectFiles {
         $files = & git -C $scanDir ls-files --cached --others --exclude-standard . 2>$null
         return @($files | Where-Object { $_ -and $_ -notmatch $skipDir })
     }
-    return @(Get-ChildItem -LiteralPath $scanDir -Recurse -File -ErrorAction SilentlyContinue |
+    $baseDir = (Get-Item -LiteralPath $scanDir).FullName
+    return @(Get-ChildItem -LiteralPath $baseDir -Recurse -File -ErrorAction SilentlyContinue |
         Where-Object { $_.FullName -notmatch $skipDir } |
-        ForEach-Object { $_.FullName.Substring($scanDir.Length).TrimStart('\', '/') })
+        ForEach-Object { $_.FullName.Substring($baseDir.Length).TrimStart('\', '/') })
 }
 
 $files = Get-ProjectFiles

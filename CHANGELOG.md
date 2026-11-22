@@ -2,6 +2,37 @@
 
 All notable changes to Project Guardian are documented in this file.
 
+## v2.3.0 - 2026-11-22
+
+### Added & Hardened (Honest Harness, Context Hygiene & Modular Skill Suite)
+- **Честная самодиагностика обвязки (`scripts/audit-harness.ps1`)**:
+  - Замена формальных проверок существования файлов (`Test-Path`) на проверку реального поведения.
+  - **Tools**: проверка выполнения `guardian.ps1 help` (exit code 0).
+  - **Guardrails**: автоматический негативный микро-зонд (проверка, что гейт реально валит сборку на дефектном секрете).
+  - **Scripts**: потоковая AST-валидация синтаксиса PowerShell (`Parser::ParseFile`) и проверка UTF-8 BOM для всех ключевых скриптов.
+  - **Subagents**: AST-валидация `prepare-handoff.ps1`.
+- **Защита от 8.3-путей Windows в Security Gate (`scripts/security-gate.ps1`)**:
+  - Устранена критическая ошибка обрезания относительных путей (`Substring`) при несовпадении длины коротких (8.3 `SALOMA~1`) и канонических путей.
+  - Переход на `(Get-Item -LiteralPath $ProjectPath).FullName`.
+- **Устойчивость счетчика шагов (`scripts/session-guard.ps1`)**:
+  - При явном указании несуществующего `-TargetConversationId` скрипт тихо возвращает 0 и не подменяет чужую сессию эвристикой.
+  - Эвристика активируется только для реально существующих на диске каталогов проектов (`Test-Path -LiteralPath $needle`).
+- **Модульная декомпозиция манифеста (`SKILL.md`)**:
+  - Манифест сокращен с 764 строк (74 КБ) до 139 строк (8 КБ), снят контекстный налог в каждой сессии.
+  - Узкоспециализированные разделы вынесены в `references/`:
+    - `references/SELECTIVE_TDD.md` (стандарты Selective TDD).
+    - `references/SEND_EMAIL.md` (универсальный почтовый шлюз).
+    - `references/HARNESS2_PROBE.md` (архитектура зондирования Harness²).
+    - `references/MULTI_PROJECT_GUIDE.md` (инварианты составных воркспейсов).
+- **Ротация оперативной памяти (`PROJECT_STATE.md` -> `docs/HISTORICAL_STATES.md`)**:
+  - Архивные чекпоинты и релизы v1.1.0–v1.8.1 вынесены в `docs/HISTORICAL_STATES.md`.
+  - `PROJECT_STATE.md` сокращен с 434 до 210 строк, сохранены последние ключевые вехи v2.x.
+- **Поведенческий TDD-сьют (`tests/test_guardian.py`)**:
+  - Добавлены тесты `test_harness_detects_broken_guardian_tool` и `test_harness_detects_broken_script_syntax`.
+  - Все 28/28 поведенческих тестов успешно проходят (`28 passed in 50s`).
+
+---
+
 ## v2.2.0 - 2026-11-22
 
 ### Added & Hardened

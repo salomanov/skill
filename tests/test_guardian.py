@@ -319,3 +319,29 @@ def test_checkpoint_and_rollback_roundtrip(tmp_path):
     rb = run_ps(SCRIPTS / "rollback.ps1", "-ProjectPath", proj, "-TargetCheckpoint", cp_name)
     assert rb.returncode == 0, rb.stdout
     assert (proj / "app.py").read_text(encoding="utf-8").strip() == "print(1)"
+
+
+def test_harness_detects_broken_guardian_tool(tmp_path):
+    """Если фасад guardian.ps1 падает на вызове help, аудит обязан выставить FAIL блокер."""
+    proj = tmp_path / "broken_tool_proj"
+    proj.mkdir()
+    (proj / "PROJECT_STATE.md").write_text("- **Версия**: `v1.0`\n", encoding="utf-8")
+    (proj / "guardian.ps1").write_text("exit 42\n", encoding="utf-8")
+    res = run_ps(SCRIPTS / "audit-harness.ps1", "-ProjectPath", proj)
+    assert res.returncode == 1
+    assert "Tools" in res.stdout
+    assert "аварийно завершился" in res.stdout or "FAIL" in res.stdout
+
+
+def test_harness_detects_broken_script_syntax(tmp_path):
+    """Синтаксическая ошибка в скрипте обвязки обязана валить аудит (Scripts FAIL)."""
+    proj = tmp_path / "broken_syntax_proj"
+    proj.mkdir()
+    (proj / "PROJECT_STATE.md").write_text("- **Версия**: `v1.0`\n", encoding="utf-8")
+    scripts = proj / "scripts"
+    scripts.mkdir()
+    (scripts / "doctor.ps1").write_text("function bad { 'missing closing brace\n", encoding="utf-8")
+    res = run_ps(SCRIPTS / "audit-harness.ps1", "-ProjectPath", proj)
+    assert res.returncode == 1
+    assert "Scripts" in res.stdout
+    assert "Синтаксические ошибки" in res.stdout or "FAIL" in res.stdout
