@@ -3,9 +3,9 @@
 > Данный файл автоматически ведется агентом и служит долговременной памятью проекта.
 > При начале новой сессии агент считывает этот файл в первую очередь.
 
-- **Версия**: `v2.0.0` (Project Guardian CLI Facade Consolidation)
-- **Статус**: Активен, Guardian CLI Facade v2.0 Operational & TDD Verified
-- **Дата обновления**: 2026-11-21
+- **Версия**: `v2.1.0` (Harness² Recursive Scaffolding & Skill Probe Integration)
+- **Статус**: Активен, Harness² Probing & 8 Dimensions Operational (9/9 Tests PASSED)
+- **Дата обновления**: 2026-11-22
 
 
 ---
@@ -48,8 +48,10 @@
 │   ├── record-failure.ps1            # Фиксация инцидентов в docs/ERRORS_AND_FAILURES.md (-SubProject, автоопределение)
 │   ├── rollback.ps1                  # Менеджер отката с просмотром точек (-List) и детекцией новых файлов
 │   ├── new-scratch.ps1               # Безопасный генератор scratch-скриптов (UTF-8, авто-подтягивание SSH/API кредов)
-│   ├── install-skill.ps1             # Автономный загрузчик скиллов из GitHub (с токеном и $HOME)
+│   ├── install-skill.ps1             # Автономный загрузчик скиллов из GitHub (с Probe Gate и $HOME)
 │   ├── check-new-skills.ps1          # Сканер свежих поступлений скиллов в апстриме
+│   ├── probe-skill.ps1               # Зондирование скиллов (Harness² Probe: YAML, UTF-8, AST, OS portability)
+│   ├── audit-harness.ps1             # Комплексный аудит 8 измерений обвязки агента (Harness² Audit)
 │   ├── add-recommendation.ps1        # Генератор рекомендаций для внешних проектов
 │   └── send-email.ps1                # Универсальный почтовый шлюз (SSL/TLS, вложения)
 ├── tests/
@@ -118,6 +120,13 @@
   - Актуализирован Раздел 13 в `SKILL.md` и справка `guardian.ps1 recommend`.
   - Добавлен 6-й автотест в `tests/test_guardian.py` (проверка валидации адресата рекомендации).
   - Ошибочно направленная рекомендация по вотчдогу Usque перенаправлена в `router-ops` и заархивирована в `docs/APPLIED_RECOMMENDATIONS.md`.
+- [x] **v2.1.0**: Harness² Recursive Scaffolding & Skill Probe Integration:
+  - Разработан скрипт `scripts/probe-skill.ps1` (валидация структуры `SKILL.md`, YAML frontmatter, UTF-8, синтаксиса `.ps1`/`.py`/`.sh` и детекция несовместимых команд Linux).
+  - Внедрен Probe Gate в `scripts/install-skill.ps1` (автоматическое зондирование скилла перед установкой в `~/.gemini/config/skills/`, блокировка с флагом `-Force`).
+  - Разработан аудит 8 измерений обвязки `scripts/audit-harness.ps1` (`guardian.ps1 harness` / `doctor.ps1 -Harness`).
+  - Добавлены команды `probe` (алиас `prb`) и `harness` (алиас `hrn`) в `guardian.ps1` CLI (в корне и в `scripts/`).
+  - TDD-тесты `tests/test_guardian.py` расширены до 9 тестов (9/9 PASSED).
+  - Манифест `SKILL.md` дополнен Разделом 21.
 
 ## 4a. Известные исправления (Regressions — не сломать повторно)
 1. Раздел 8/9 не должен снова разрешать «пароль по умолчанию» — именно эта формулировка легализовала бэкдор.
@@ -141,8 +150,11 @@
 19. Linux shell-скрипты (`.sh`, `S9*`) и Android KeyLayout (`.kl`, `.idc`) обязаны сохраняться строго в UTF-8 без BOM (проверяется правилом `SYNTAX-BOM` в `security-gate.ps1`), а выполненные рекомендации `[x] ВЫПОЛНЕНО` обязаны архивироваться в `docs/APPLIED_RECOMMENDATIONS.md` (правило `REC-001`).
 20. В `guardian.ps1` вызов целевых скриптов обязан явно разделять ветку `$RestArgs.Count -gt 0` (вызов с аргументами) и ветку без аргументов: в противном случае сплэттинг пустого массива `@RestArgs` в PowerShell 5.1 приводит к передаче пустой строки `""` в первый позиционный параметр и затиранию параметров со значениями по умолчанию (например, `$ProjectPath = (Get-Location).Path`).
 21. Рекомендации межпроектного взаимодействия обязаны адресоваться целевому скиллу (`-Skill <Name>`) или проекту (`-TargetProject <Path>`), а не сбрасываться по умолчанию в ядро Project Guardian (`Skill`), во избежание засорения мета-скилла специфичными доменными правилами (роутеры, электроника, книги).
+22. В `doctor.ps1` параметры обязаны оформляться с `[CmdletBinding()]` и валидацией `$ProjectPath.StartsWith("-")`, чтобы флаги вроде `-Harness` не затирали путь к проекту по позиционному сопоставлению.
 
 ## 5. История Изменений
+
+- 🛡️ **Чекпоинт** [2026-11-22 12:20:50] (метка: 2026-11-22_12-20-50): v2.1.0: Harness2 Integration (Probe Gate & 8 Dimensions Audit)
 
 - 🛡️ **Чекпоинт** [2026-11-22 12:14:01] (метка: 2026-11-22_12-14-01): pre-v2.1.0: Harness2 Integration
 

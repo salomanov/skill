@@ -1,11 +1,29 @@
-﻿param(
-    [string]$ProjectPath = (Get-Location).Path
+﻿[CmdletBinding()]
+param(
+    [Parameter(Position=0)]
+    [string]$ProjectPath = (Get-Location).Path,
+    [switch]$Harness
 )
 
 $ErrorActionPreference = "Continue"
 $env:PYTHONIOENCODING = "utf-8"
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
+
+if ($ProjectPath -and $ProjectPath.StartsWith("-")) {
+    if ($ProjectPath -eq "-Harness") {
+        $Harness = $true
+    }
+    $ProjectPath = (Get-Location).Path
+}
+
+if ($Harness) {
+    $harnessScript = Join-Path $PSScriptRoot "audit-harness.ps1"
+    if (Test-Path -LiteralPath $harnessScript) {
+        & $harnessScript -ProjectPath $ProjectPath
+        exit $LASTEXITCODE
+    }
+}
 
 if ($ProjectPath -and (Test-Path -LiteralPath $ProjectPath)) {
     $ProjectPath = (Resolve-Path -LiteralPath $ProjectPath).Path

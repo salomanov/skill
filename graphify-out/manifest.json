@@ -24,9 +24,9 @@
     "semantic_hash": "80e81ee55e81e00969bd4a5ef04b0183"
   },
   "scripts/doctor.ps1": {
-    "mtime": 1795274631.3628082,
-    "seen": 1795274663.5788212,
-    "ast_hash": "1f5dac041f7c58e4e6ef6a39f0a815bc",
+    "mtime": 1795331900.4777367,
+    "seen": 1795332052.6701102,
+    "ast_hash": "e206a9eea3bc25bc5a0e873169ce2b85",
     "semantic_hash": ""
   },
   "scripts/gen-env.ps1": {
@@ -42,10 +42,10 @@
     "semantic_hash": "68de9cb538873fdeb8e40ef7ec318b05"
   },
   "scripts/install-skill.ps1": {
-    "mtime": 1794638819.2876692,
-    "seen": 1795178453.7240026,
-    "ast_hash": "3768d1da7fb27ad7ed3351b40d2f2b87",
-    "semantic_hash": "3768d1da7fb27ad7ed3351b40d2f2b87"
+    "mtime": 1795331879.4683516,
+    "seen": 1795332052.6701193,
+    "ast_hash": "144c21513978b224f122a76a1197a753",
+    "semantic_hash": ""
   },
   "scripts/new-scratch.ps1": {
     "mtime": 1794042100.2689779,
@@ -96,9 +96,9 @@
     "semantic_hash": ""
   },
   ".agents/HANDOFF.md": {
-    "mtime": 1795276417.602064,
-    "seen": 1795293635.1985633,
-    "ast_hash": "6309ba823b2aeb0f3f3e5ddea3c8789b",
+    "mtime": 1795293661.9209044,
+    "seen": 1795332052.6701431,
+    "ast_hash": "f0716f25f9d5e7dd255d429bf4ead96a",
     "semantic_hash": ""
   },
   "AGENT_RECOMMENDATIONS.md": {
@@ -108,15 +108,15 @@
     "semantic_hash": ""
   },
   "CHANGELOG.md": {
-    "mtime": 1795293611.9562576,
-    "seen": 1795293635.1985672,
-    "ast_hash": "a17772c976afd1f0fdf98b52c6580750",
+    "mtime": 1795331979.5128915,
+    "seen": 1795332052.6701474,
+    "ast_hash": "a8ad2eab619009f4cb441531a3addd77",
     "semantic_hash": ""
   },
   "PROJECT_STATE.md": {
-    "mtime": 1795293633.3599515,
-    "seen": 1795293635.198569,
-    "ast_hash": "acd6add4c88681cdb6839c243ecb1f8c",
+    "mtime": 1795332050.7491488,
+    "seen": 1795332052.670149,
+    "ast_hash": "fa3ac5a697507196326933a70078d882",
     "semantic_hash": ""
   },
   "README.md": {
@@ -126,9 +126,9 @@
     "semantic_hash": ""
   },
   "SKILL.md": {
-    "mtime": 1795293538.433913,
-    "seen": 1795293635.198573,
-    "ast_hash": "5d75ef56cae2147cc3afcbe21f554d36",
+    "mtime": 1795331955.7494006,
+    "seen": 1795332052.670153,
+    "ast_hash": "28d055eacd1a670a7533625050414982",
     "semantic_hash": ""
   },
   "SKILL_REVIEW.md": {
@@ -156,21 +156,33 @@
     "semantic_hash": ""
   },
   "guardian.ps1": {
-    "mtime": 1795293475.4423363,
-    "seen": 1795293635.1985083,
-    "ast_hash": "cafc4895e6c924bd881f9ffc1e645dff",
+    "mtime": 1795331807.3682785,
+    "seen": 1795332052.670083,
+    "ast_hash": "a87b58197fddf665cee85c498298f6f2",
     "semantic_hash": ""
   },
   "scripts/guardian.ps1": {
-    "mtime": 1795293482.5219162,
-    "seen": 1795293635.1985402,
-    "ast_hash": "cafc4895e6c924bd881f9ffc1e645dff",
+    "mtime": 1795331820.165745,
+    "seen": 1795332052.6701171,
+    "ast_hash": "a87b58197fddf665cee85c498298f6f2",
     "semantic_hash": ""
   },
   "tests/test_guardian.py": {
-    "mtime": 1795293491.0985088,
-    "seen": 1795293635.1985612,
-    "ast_hash": "b26ee72af5cd1b612a281aff83cdd9f1",
+    "mtime": 1795331845.6811845,
+    "seen": 1795332052.6701412,
+    "ast_hash": "5af0166f3c5aab899dbbfc9067e78654",
+    "semantic_hash": ""
+  },
+  "scripts/audit-harness.ps1": {
+    "mtime": 1795331793.5296109,
+    "seen": 1795332052.6700974,
+    "ast_hash": "e89c75f4562d351d57ea41ed800cb06e",
+    "semantic_hash": ""
+  },
+  "scripts/probe-skill.ps1": {
+    "mtime": 1795331855.7562711,
+    "seen": 1795332052.6701257,
+    "ast_hash": "71e7e357392f693c71936e54124144b7",
     "semantic_hash": ""
   }
 }

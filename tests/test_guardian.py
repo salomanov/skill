@@ -23,7 +23,7 @@ def test_guardian_root_help():
     assert p.exists()
     res = run_guardian(p, "--help")
     assert res.returncode == 0
-    assert "Project Guardian v2.0 CLI" in res.stdout
+    assert "Project Guardian v2." in res.stdout
     assert "checkpoint" in res.stdout
     assert "doctor" in res.stdout
 
@@ -32,7 +32,7 @@ def test_guardian_scripts_help():
     assert p.exists()
     res = run_guardian(p, "-h")
     assert res.returncode == 0
-    assert "Project Guardian v2.0 CLI" in res.stdout
+    assert "Project Guardian v2." in res.stdout
 
 def test_guardian_no_args():
     p = REPO_ROOT / "guardian.ps1"
@@ -57,3 +57,26 @@ def test_guardian_recommend_no_target_fails():
     res = run_guardian(p, "recommend", "-Title", "Test Recommendation Without Target")
     assert res.returncode == 1
     assert "Не указан адресат рекомендации" in res.stdout
+
+def test_guardian_harness_audit():
+    p = REPO_ROOT / "guardian.ps1"
+    res = run_guardian(p, "harness")
+    assert res.returncode == 0
+    assert "8 Измерений Обвязки" in res.stdout
+    assert "System Prompts" in res.stdout
+    assert "Guardrails" in res.stdout
+
+def test_guardian_probe_self():
+    p = REPO_ROOT / "guardian.ps1"
+    res = run_guardian(p, "probe", "-SkillPath", str(REPO_ROOT))
+    assert res.returncode == 0
+    assert "PROBE PASSED" in res.stdout
+
+def test_guardian_probe_invalid_dir(tmp_path):
+    p = REPO_ROOT / "guardian.ps1"
+    empty_dir = tmp_path / "fake_skill"
+    empty_dir.mkdir()
+    res = run_guardian(p, "probe", "-SkillPath", str(empty_dir))
+    assert res.returncode == 1
+    assert "PROBE FAILED" in res.stdout
+

@@ -110,6 +110,29 @@ if ($apiSuccess -and (Test-Path -LiteralPath (Join-Path $targetSkillDir "SKILL.m
 }
 
 if ($installed) {
+    # Зондирование скилла перед финализацией (Harness² Probe Gate)
+    $probeScript = Join-Path $PSScriptRoot "probe-skill.ps1"
+    if (Test-Path -LiteralPath $probeScript) {
+        Write-Host "`nПроверка скилла через Probe (Harness²)..." -ForegroundColor Cyan
+        & $probeScript -SkillPath $targetSkillDir -Quiet
+        if ($LASTEXITCODE -ne 0) {
+            if (-not $Force) {
+                Write-Host "`n[FAIL] Скилл '$SkillName' не прошёл зонд совместимости и безопасности!" -ForegroundColor Red
+                Write-Host "Для детальной диагностики запустите: guardian.ps1 probe -SkillPath '$targetSkillDir'" -ForegroundColor Yellow
+                Write-Host "Для принудительной установки используйте: -Force" -ForegroundColor Gray
+                # Откат скачанных файлов во избежание порчи рабочей среды при первой установке
+                if (-not $existsLocally) {
+                    Remove-Item -LiteralPath $targetSkillDir -Recurse -Force -ErrorAction SilentlyContinue
+                }
+                exit 1
+            } else {
+                Write-Host "[WARN] Скилл не прошёл зонд, но установка продолжена из-за флага -Force." -ForegroundColor Yellow
+            }
+        } else {
+            Write-Host "[OK] Зонд пройден успешно (Probe Passed)." -ForegroundColor Green
+        }
+    }
+
     $actionVerb = if ($existsLocally -and $Update) { "обновлён" } else { "установлен" }
     Write-Host "[OK] Скилл '$SkillName' успешно $actionVerb в: $targetSkillDir" -ForegroundColor Green
 

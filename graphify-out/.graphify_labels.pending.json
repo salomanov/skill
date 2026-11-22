@@ -2,6 +2,8 @@
   "0": "get_dialog_title.py",
   "1": "send-email.py",
   "2": "security-gate.ps1",
+  "3": "audit-harness.ps1",
+  "4": "probe-skill.ps1",
   "5": "run-tests.ps1",
   "6": "checkpoint.ps1",
   "7": "doctor.ps1",

@@ -2,6 +2,31 @@
 
 All notable changes to Project Guardian are documented in this file.
 
+## v2.1.0 - 2026-11-22
+
+### Added
+- **Интеграция архитектурных принципов Harness² (Google Research, Recursive Agent Harnessing)**:
+  - **Зондирование скиллов (`scripts/probe-skill.ps1`, команда `guardian.ps1 probe` / `prb`)**:
+    - Валидация структуры `SKILL.md` (YAML frontmatter: `name`, `description`).
+    - Проверка кодировки UTF-8 и целостности файлов.
+    - AST-анализ синтаксиса PowerShell (`.ps1`) и компиляция Python (`.py`).
+    - Детекция отсутствия UTF-8 BOM в Shell-скриптах (`.sh`) для совместимости с Linux/Android.
+    - Детекция несовместимых с Windows команд Linux (`sudo`, `apt-get`, `yum`, `brew`).
+    - Проверка утечек секретов и приватных ключей.
+  - **Probe Gate в установщике скиллов (`scripts/install-skill.ps1`)**:
+    - Автоматический пробинг скилла перед сохранением в `~/.gemini/config/skills/`.
+    - Блокировка поврежденных или несовместимых скиллов (обход через `-Force`).
+  - **Комплексный аудит 8 измерений обвязки (`scripts/audit-harness.ps1`, `guardian.ps1 harness` / `hrn`, `doctor.ps1 -Harness`)**:
+    - Анализ всех 8 измерений: System Prompts, Tools, Memory, Guardrails, Scripts, Skills, Subagents, Control Hooks.
+    - Единый сводный дашборд здоровья обвязки агента (8/8 Dimensions Operational).
+  - **Расширение TDD-сьюта (`tests/test_guardian.py`)**:
+    - Тесты `test_guardian_harness_audit`, `test_guardian_probe_self`, `test_guardian_probe_invalid_dir` (9/9 PASSED).
+  - **Документация**:
+    - Раздел 21 в `SKILL.md` («Интеграция с принципами Harness²: Зондирование и 8 Измерений Обвязки»).
+    - Обновление фасада CLI `guardian.ps1` до v2.1 (16 команд).
+
+---
+
 ## v2.0.1 - 2026-11-22
 
 ### Fixed

@@ -1,17 +1,17 @@
 # Graph Report - Skill  (2026-11-22)
 
 ## Corpus Check
-- 19 files · ~29,229 words
+- 21 files · ~31,847 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 3 file(s) not represented in the graph (top: (none) 3)
 
 ## Summary
-- 65 nodes · 80 edges · 19 communities (3 shown, 16 thin omitted)
+- 71 nodes · 87 edges · 21 communities (3 shown, 18 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `33d9e26a`
+- Built from commit: `908ca640`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -21,7 +21,7 @@
 - test_guardian.py
 
 ## God Nodes (most connected - your core abstractions)
-1. `run_guardian()` - 9 edges
+1. `run_guardian()` - 12 edges
 2. `get_dialog_title()` - 6 edges
 3. `set_dialog_title()` - 6 edges
 4. `main()` - 5 edges
@@ -33,13 +33,13 @@
 10. `load_config()` - 3 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `match_workspace()` --calls--> `json`  [EXTRACTED]
+- `main()` --calls--> `argparse`  [EXTRACTED]
   scripts/get_dialog_title.py →   _Bridges community 0 → community 1_
 
 ## Import Cycles
 - None detected.
 
-## Communities (19 total, 16 thin omitted)
+## Communities (21 total, 18 thin omitted)
 
 ### Community 0 - "get_dialog_title.py"
 Cohesion: 0.42
@@ -50,16 +50,11 @@ Cohesion: 0.17
 Nodes (3): load_config(), main(), send_email()
 
 ### Community 18 - "test_guardian.py"
-Cohesion: 0.31
-Nodes (7): run_guardian(), test_guardian_gate(), test_guardian_no_args(), test_guardian_recommend_no_target_fails(), test_guardian_root_help(), test_guardian_scripts_help(), test_guardian_unknown_command()
+Cohesion: 0.25
+Nodes (10): run_guardian(), test_guardian_gate(), test_guardian_harness_audit(), test_guardian_no_args(), test_guardian_probe_invalid_dir(), test_guardian_probe_self(), test_guardian_recommend_no_target_fails(), test_guardian_root_help() (+2 more)
 
 ## Knowledge Gaps
-- **16 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **18 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
-_Questions this graph is uniquely positioned to answer:_
-
-- **Why does `match_workspace()` connect `get_dialog_title.py` to `send-email.py`?**
-  _High betweenness centrality (0.005) - this node is a cross-community bridge._
-- **Why does `main()` connect `send-email.py` to `get_dialog_title.py`?**
-  _High betweenness centrality (0.005) - this node is a cross-community bridge._
+_Not enough signal to generate questions. This usually means the corpus has no AMBIGUOUS edges, no bridge nodes, no INFERRED relationships, and all communities are tightly cohesive. Add more files or run with --mode deep to extract richer edges._

@@ -68,10 +68,14 @@ $CommandMap = @{
     'check-skills' = 'check-new-skills.ps1'
     'recommend'    = 'add-recommendation.ps1'
     'email'        = 'send-email.ps1'
+    'probe'        = 'probe-skill.ps1'
+    'prb'          = 'probe-skill.ps1'
+    'harness'      = 'audit-harness.ps1'
+    'hrn'          = 'audit-harness.ps1'
 }
 
 function Show-GuardianHelp {
-    Write-Host "`n🛡️ Project Guardian v2.0 CLI (Universal Facade)" -ForegroundColor Cyan
+    Write-Host "`n🛡️ Project Guardian v2.1 CLI (Universal Facade)" -ForegroundColor Cyan
     Write-Host "Использование: guardian.ps1 <команда> [параметры...]" -ForegroundColor White
     Write-Host "`nДоступные команды:" -ForegroundColor Yellow
     
@@ -80,6 +84,8 @@ function Show-GuardianHelp {
         [PSCustomObject]@{ Команда = 'doctor (doc)'; Описание = 'Экспресс-диагностика окружения, Git, памяти и запуск Security Gate' },
         [PSCustomObject]@{ Команда = 'gate (security, sec)'; Описание = 'Исполняемый Security Gate: секреты, синтаксис AST, BOM, инварианты' },
         [PSCustomObject]@{ Команда = 'test (tests)'; Описание = 'Автопоиск и запуск тестовых фреймворков (pytest, npm test, unittest)' },
+        [PSCustomObject]@{ Команда = 'probe (prb)'; Описание = 'Зондирование скилла (Harness² Probe) на совместимость с Windows и безопасность' },
+        [PSCustomObject]@{ Команда = 'harness (hrn)'; Описание = 'Комплексный аудит 8 измерений обвязки агента (Harness² Audit)' },
         [PSCustomObject]@{ Команда = 'rollback (rb)'; Описание = 'Откат к контрольной точке или просмотр списка (-List)' },
         [PSCustomObject]@{ Команда = 'failure (record, fail)'; Описание = 'Фиксация сбоя/инцидента в docs/ERRORS_AND_FAILURES.md' },
         [PSCustomObject]@{ Команда = 'handoff'; Описание = 'Подготовка контекста для передачи в новый диалог (.agents/HANDOFF.md)' },
