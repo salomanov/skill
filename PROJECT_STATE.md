@@ -161,6 +161,8 @@
 
 ## 5. История Изменений
 
+- 🛡️ **Чекпоинт** [2026-11-22 17:32:37] (метка: 2026-11-22_17-32-37): pre-v2.3.0: Honest Harness and Context Hygiene
+
 - 🛡️ **Чекпоинт** [2026-11-22 17:20:02] (метка: 2026-11-22_17-20-02): v2.2.0: Production Hardening & Honest Scaffolding Suite
 
 - 🛡️ **Чекпоинт** [2026-11-22 12:20:50] (метка: 2026-11-22_12-20-50): v2.1.0: Harness2 Integration (Probe Gate & 8 Dimensions Audit)

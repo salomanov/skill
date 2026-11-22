@@ -2,11 +2,11 @@
 
 - **Название диалога**: Project Guardian v2.0 Consolidation
 - **Проект**: Skill (E:\Projects\Skill)
-- **Дата формирования**: 2026-11-22 01:41:01
+- **Дата формирования**: 2026-11-22 17:20:26
 - **Стек**: Рантайм и шелл: PowerShell 5.1+ / Windows | Платформа: Google Antigravity / Gemini CLI | Интеграции: Git, GitHub REST API, Graphify, Agentic Awesome Skills Catalog, Ponytail
 - **Ветка Git**: main
-- **Последний коммит**: checkpoint: v2.0.1 Targeted Skill Recommendation Routing & Usque Archive [2026-11-22_01-40-33] (7801416)
-- **Последние изменения**: v2.0.1 Targeted Skill Recommendation Routing & Usque Archive
+- **Последний коммит**: checkpoint: v2.2.0: Production Hardening & Honest Scaffolding Suite [2026-11-22_17-20-02] (a9d52c5)
+- **Последние изменения**: v2.2.0: Production Hardening & Honest Scaffolding Suite
 
 ---
 
@@ -14,9 +14,9 @@
 ```text
 Тема диалога: Project Guardian v2.0 Consolidation
 Привет! Мы продолжаем работу над проектом 'Skill' в папке: E:\Projects\Skill
-Стек: Рантайм и шелл: PowerShell 5.1+ / Windows | Платформа: Google Antigravity / Gemini CLI | Интеграции: Git, GitHub REST API, Graphify, Agentic Awesome Skills Catalog, Ponytail | Ветка Git: main | Последний коммит: checkpoint: v2.0.1 Targeted Skill Recommendation Routing & Usque Archive [2026-11-22_01-40-33] (7801416)
-Контекст изменений: v2.0.1 Targeted Skill Recommendation Routing & Usque Archive
-Задача на текущую сессию: Продолжение работы с Project Guardian v2.0.1 / профильными скиллами
+Стек: Рантайм и шелл: PowerShell 5.1+ / Windows | Платформа: Google Antigravity / Gemini CLI | Интеграции: Git, GitHub REST API, Graphify, Agentic Awesome Skills Catalog, Ponytail | Ветка Git: main | Последний коммит: checkpoint: v2.2.0: Production Hardening & Honest Scaffolding Suite [2026-11-22_17-20-02] (a9d52c5)
+Контекст изменений: v2.2.0: Production Hardening & Honest Scaffolding Suite
+Задача на текущую сессию: Продолжение работы с Project Guardian v2.2.0
 
 Пожалуйста, первым делом прочитай PROJECT_STATE.md для загрузки полной памяти проекта и подтверди готовность к задаче.
 ```
@@ -24,28 +24,44 @@
 ---
 
 ## Затронутые файлы:
-- AGENT_RECOMMENDATIONS.md
+- .gitignore
+- .security-gate-allow
 - CHANGELOG.md
 - PROJECT_STATE.md
 - SKILL.md
-- docs/APPLIED_RECOMMENDATIONS.md
 - graphify-out/.graphify_build_state.json
 - graphify-out/.graphify_labels.json.sig
 - graphify-out/.graphify_labels.pending.json
 - graphify-out/GRAPH_REPORT.md
-- graphify-out/cache/ast/v0.9.108-s45-g460503b3f2a4/3add9af77ac5c4a08fe984397a40d5082e3f69dc77a31856519556b946d1d157.json
-- graphify-out/cache/ast/v0.9.108-s45-g460503b3f2a4/58ee3b19a31585559230b52591d7b532a14ec3e668ab7cc17cd864e7bbe5ad28.json
-- graphify-out/cache/ast/v0.9.108-s45-g460503b3f2a4/991be308a76a1cb3ec6dc202ff8ec58a3287450f4f61af349afc3a31bac925ca.json
-- graphify-out/cache/ast/v0.9.108-s45-g460503b3f2a4/d8682c3681aefe327b49cb9cf1cc00aaa7295ff9c8137bf8537d97084fc65850.json
-- graphify-out/cache/ast/v0.9.108-s45-g460503b3f2a4/f46df56811629fcaa67c5ed57256b2632204ff874430662666f898a59dcf82c2.json
+- graphify-out/cache/ast/v0.9.108-s45-g460503b3f2a4/0c13cb59ccb5867426d86ba5d117d07802f8313527a77030e11994c1acdd1774.json
+- graphify-out/cache/ast/v0.9.108-s45-g460503b3f2a4/2d61c478e853e655cef88bf4106637826f99e0f1aa69e2c51bb3bb10fcaaa2ab.json
+- graphify-out/cache/ast/v0.9.108-s45-g460503b3f2a4/3b7a3083a6da4d58eaf09cfbfbddadb8c0371f0f6846d94d164f1c25a060d57d.json
+- graphify-out/cache/ast/v0.9.108-s45-g460503b3f2a4/3cf9d4a8e7ba035a7923853afff5dca816bfe9ea7d0af3e2b23e5aee4c888424.json
+- graphify-out/cache/ast/v0.9.108-s45-g460503b3f2a4/547e1e71684ce138bd49904ccc0faefd4bc6af004a9bc5f61da85800af441015.json
+- graphify-out/cache/ast/v0.9.108-s45-g460503b3f2a4/58afc2376174b5e8769a85ab598377bd81438887d653ff6dd96fc49ac55e5e76.json
+- graphify-out/cache/ast/v0.9.108-s45-g460503b3f2a4/693b9de27890f65dd6d9febe19f6f691b70cb04ddfe615d44be980e07090550e.json
+- graphify-out/cache/ast/v0.9.108-s45-g460503b3f2a4/985be8948e62a6d9ced44e8c48f06a44c3fae71f76a0ce554ff13e3fb9fbd5c4.json
+- graphify-out/cache/ast/v0.9.108-s45-g460503b3f2a4/c2159ce2d8bfd62cddcff7352ba5b2c4999e2e3cdd6a336d1e259f6759a029f4.json
+- graphify-out/cache/ast/v0.9.108-s45-g460503b3f2a4/e3091fc269e75a51e19ee7e55668d896e3d270f923fcd9055dee92887d12c82b.json
+- graphify-out/cache/ast/v0.9.108-s45-g460503b3f2a4/eb01cea2d2ddbc8eb38d4bc24d41a8c6b84868ccc4be442d68cabaa7d394957b.json
+- graphify-out/cache/ast/v0.9.108-s45-g460503b3f2a4/ed6edca36c9f1c2138afe057fff35a536faa15896688e659346553de4182ac08.json
+- graphify-out/cache/ast/v0.9.108-s45-g460503b3f2a4/f9f74a8784bae39c60f3a4f03898b63db5ffdb584183de576104c3f842a7c33f.json
 - graphify-out/cache/stat-index.json
 - graphify-out/graph.html
 - graphify-out/graph.json
 - graphify-out/manifest.json
 - guardian.ps1
-- scripts/add-recommendation.ps1
+- scripts/audit-harness.ps1
+- scripts/checkpoint.ps1
+- scripts/clean-backups.ps1
+- scripts/gen-env.ps1
 - scripts/guardian.ps1
-- scripts/record-failure.ps1
+- scripts/new-scratch.ps1
+- scripts/rollback.ps1
+- scripts/security-gate.ps1
+- scripts/send-email.ps1
+- scripts/session-guard.ps1
+- scripts/session-steps.ps1
 - tests/__pycache__/test_guardian.cpython-313-pytest-9.2.0.pyc
 - tests/__pycache__/test_guardian.cpython-313.pyc
 - tests/test_guardian.py
