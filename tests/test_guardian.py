@@ -2,6 +2,7 @@ import glob
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -252,6 +253,23 @@ def test_guardian_harness_audit():
     assert "8 Измерений Обвязки" in res.stdout
     assert "System Prompts" in res.stdout
     assert "Guardrails" in res.stdout
+
+
+def test_harness_detects_version_drift(tmp_path):
+    """Память проекта врёт о версии -> аудит обязан предупредить (v2.3.0 vs код v2.3.2)."""
+    proj = tmp_path / "proj"
+    (proj / "scripts").mkdir(parents=True)
+    shutil.copy(SCRIPTS / "audit-harness.ps1", proj / "scripts" / "audit-harness.ps1")
+    shutil.copy(SCRIPTS / "security-gate.ps1", proj / "scripts" / "security-gate.ps1")
+    shutil.copy(SCRIPTS / "session-guard.ps1", proj / "scripts" / "session-guard.ps1")
+    (proj / "scripts" / "guardian.ps1").write_text('Write-Host "Project Guardian v9.9.9"\n', encoding="utf-8")
+    (proj / "PROJECT_STATE.md").write_text(
+        "# Состояние\n\n- **Версия**: `v0.1.0` (устаревшая)\n", encoding="utf-8"
+    )
+
+    res = run_ps(proj / "scripts" / "audit-harness.ps1", "-ProjectPath", proj)
+    assert "версии расходятся" in res.stdout
+    assert "v0.1.0" in res.stdout and "v9.9.9" in res.stdout
 
 
 def test_harness_reports_blockers(tmp_path):

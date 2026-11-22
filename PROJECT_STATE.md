@@ -3,8 +3,8 @@
 > Данный файл автоматически ведется агентом и служит долговременной памятью проекта.
 > При начале новой сессии агент считывает этот файл в первую очередь.
 
-- **Версия**: `v2.3.0` (Honest Harness, Context Hygiene & Modular Skill Suite)
-- **Статус**: Активен, 28/28 Behavioral Tests PASSED, Honest Harness, Modular SKILL & Memory Rotated
+- **Версия**: `v2.3.2` (Step Counter Calibration 500 + аудит сверяет версию памяти с кодом)
+- **Статус**: Активен, 29/29 Behavioral Tests PASSED, Honest Harness, аудит сверяет версию памяти с кодом
 - **Дата обновления**: 2026-11-22
 
 
@@ -160,6 +160,8 @@
 22. В `doctor.ps1` параметры обязаны оформляться с `[CmdletBinding()]` и валидацией `$ProjectPath.StartsWith("-")`, чтобы флаги вроде `-Harness` не затирали путь к проекту по позиционному сопоставлению.
 
 ## 5. История Изменений
+
+- 🛡️ **Чекпоинт** [2026-11-22 23:40:55] (метка: 2026-11-22_23-40-55): v2.3.2: version drift audit and changelog
 
 - 🛡️ **Чекпоинт** [2026-11-22 17:55:01] (метка: 2026-11-22_17-55-01): v2.3.1: Step counter threshold calibration (500 steps, user/model/trajectory differentiation)
 

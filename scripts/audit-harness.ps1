@@ -97,10 +97,28 @@ if ($hasState) {
     $stateText = ''
     try { $stateText = [System.IO.File]::ReadAllText($stateFile, [System.Text.Encoding]::UTF8) } catch { }
     $hasVersion = ($stateText -match '(?m)^-\s*\*\*(Версия|Version)\*\*')
+    # Сверка версии памяти с кодом: состояние проекта пишется в шапке самой памяти
+    $declaredVersion = ''
+    $mVer = [regex]::Match($stateText, '(?m)^-\s*\*\*(?:Версия|Version)\*\*:\s*`?v?(\d+\.\d+\.\d+)')
+    if ($mVer.Success) { $declaredVersion = $mVer.Groups[1].Value }
+    $codeVersion = ''
+    $guardianFile = Join-Path $ProjectPath 'scripts\guardian.ps1'
+    if (Test-Path -LiteralPath $guardianFile) {
+        $mCode = [regex]::Match([System.IO.File]::ReadAllText($guardianFile, [System.Text.Encoding]::UTF8), 'Project Guardian v(\d+\.\d+\.\d+)')
+        if ($mCode.Success) { $codeVersion = $mCode.Groups[1].Value }
+    }
+    $versionNote = ''
+    $versionDrift = $false
+    if ($declaredVersion -and $codeVersion -and $declaredVersion -ne $codeVersion) {
+        $versionDrift = $true
+        $versionNote = " версии расходятся (память v$declaredVersion, код v$codeVersion)"
+    }
     $graphNote = if ($hasGraph) { 'граф Graphify построен' } else { 'граф Graphify отсутствует (обновится при следующем checkpoint)' }
-    if ($hasVersion -and $stateAge -le 30) {
+    if ($hasVersion -and -not $versionDrift -and $stateAge -le 30) {
         Report-Dim 3 "Memory" "OK" ("PROJECT_STATE.md актуален ({0:N0} дн.), версия зафиксирована, {1}" -f $stateAge, $graphNote)
         $dimensionScore++
+    } elseif ($versionDrift) {
+        Report-Dim 3 "Memory" "WARN" ("PROJECT_STATE.md$versionNote; {0}" -f $graphNote)
     } else {
         Report-Dim 3 "Memory" "WARN" ("PROJECT_STATE.md устарел или без версии (возраст {0:N0} дн.); {1}" -f $stateAge, $graphNote)
     }
