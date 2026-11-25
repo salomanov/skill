@@ -161,6 +161,8 @@
 
 ## 5. История Изменений
 
+- 🛡️ **Чекпоинт** [2026-11-25 16:57:38] (метка: 2026-11-25_16-57-38): pre-fix: v2.4.0 polish (SKILL.md, gitignore, docs, handoff tests)
+
 - 🛡️ **Чекпоинт** [2026-11-25 15:53:52] (метка: 2026-11-25_15-53-52): v2.4.0: Zero-Copy Automated Conversation Creation in Handoff
 
 - 🛡️ **Чекпоинт** [2026-11-25 15:49:50] (метка: 2026-11-25_15-49-50): pre-v2.4.0: Automated Conversation Creation in Handoff

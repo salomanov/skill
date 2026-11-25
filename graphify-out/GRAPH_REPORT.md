@@ -1,17 +1,17 @@
 # Graph Report - Skill  (2026-11-25)
 
 ## Corpus Check
-- 23 files · ~32,066 words
+- 23 files · ~32,136 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 3 file(s) not represented in the graph (top: (none) 3)
 
 ## Summary
-- 120 nodes · 183 edges · 33 communities (5 shown, 28 thin omitted)
+- 121 nodes · 184 edges · 33 communities (5 shown, 28 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 1 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `ff75c00a`
+- Built from commit: `40154efb`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -44,7 +44,7 @@
 7. `test_gate_detects_test_path_without_literalpath()` - 5 edges
 8. `test_gate_allowlist_strict_entry_is_narrow()` - 5 edges
 9. `test_gate_allowlist_legacy_entry_warns()` - 5 edges
-10. `main()` - 5 edges
+10. `test_prepare_handoff_creates_handoff_doc()` - 5 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `run_ps()` --references--> `Path`  [EXTRACTED]
@@ -90,8 +90,8 @@ Nodes (4): make_transcript(), test_step_counter_counts_steps_not_lines(), test_s
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `run_ps()` connect `test_guardian.py` to `test_prepare_handoff_creates_handoff_doc`, `test_harness_detects_version_drift`, `make_project`, `make_transcript`, `test_checkpoint_and_rollback_roundtrip`, `test_step_counter_silent_when_session_unknown`, `test_harness_reports_blockers`, `test_harness_detects_broken_guardian_tool`, `test_harness_detects_broken_script_syntax`, `test_root_facade_is_thin_shim`?**
-  _High betweenness centrality (0.073) - this node is a cross-community bridge._
+  _High betweenness centrality (0.075) - this node is a cross-community bridge._
 - **Why does `test_prepare_handoff_creates_handoff_doc()` connect `test_prepare_handoff_creates_handoff_doc` to `test_guardian.py`?**
-  _High betweenness centrality (0.024) - this node is a cross-community bridge._
+  _High betweenness centrality (0.035) - this node is a cross-community bridge._
 - **Why does `secret_line()` connect `make_project` to `test_guardian.py`?**
   _High betweenness centrality (0.012) - this node is a cross-community bridge._

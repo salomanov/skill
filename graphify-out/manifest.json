@@ -96,9 +96,9 @@
     "semantic_hash": ""
   },
   ".agents/HANDOFF.md": {
-    "mtime": 1795351569.8690767,
-    "seen": 1795352105.0754235,
-    "ast_hash": "a8a58b3366f95a1e238096aca2b04e18",
+    "mtime": 1795604048.587913,
+    "seen": 1795607860.3239858,
+    "ast_hash": "30bf48737839414fced7cb73bdd7fa4b",
     "semantic_hash": ""
   },
   "AGENT_RECOMMENDATIONS.md": {
@@ -114,9 +114,9 @@
     "semantic_hash": ""
   },
   "PROJECT_STATE.md": {
-    "mtime": 1795604032.4216247,
-    "seen": 1795604034.462643,
-    "ast_hash": "56d7dbd900b579f1f63079b8dfda079a",
+    "mtime": 1795607858.239796,
+    "seen": 1795607860.3239925,
+    "ast_hash": "bd0ce1041612b5a492851ce42f11b0e9",
     "semantic_hash": ""
   },
   "README.md": {
@@ -168,9 +168,9 @@
     "semantic_hash": ""
   },
   "tests/test_guardian.py": {
-    "mtime": 1795603907.3936787,
-    "seen": 1795604034.4626348,
-    "ast_hash": "fc39921219b4cc04db6a2a18dd2507b4",
+    "mtime": 1795607417.493632,
+    "seen": 1795607860.3239837,
+    "ast_hash": "f77f18b08cf16b35f4b71a6343be679b",
     "semantic_hash": ""
   },
   "scripts/audit-harness.ps1": {

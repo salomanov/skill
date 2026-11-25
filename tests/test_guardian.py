@@ -389,3 +389,16 @@ def test_prepare_handoff_creates_handoff_doc(tmp_path):
     assert handoff_file.exists(), "Файл .agents/HANDOFF.md не был создан"
     text = handoff_file.read_text(encoding="utf-8")
     assert "Контекст передачи проекта" in text
+
+
+def test_prepare_handoff_creates_handoff_doc(tmp_path):
+    """prepare-handoff.ps1 с флагом -NoAutoCreate обязан создавать .agents/HANDOFF.md и выходить с 0."""
+    proj = tmp_path / "handoff_proj"
+    proj.mkdir()
+    (proj / "PROJECT_STATE.md").write_text("- **Версия**: `v1.0`\n## Следующие Шаги\n1. Сделать интеграцию\n", encoding="utf-8")
+    res = run_ps(SCRIPTS / "prepare-handoff.ps1", "-ProjectPath", proj, "-NoAutoCreate")
+    assert res.returncode == 0
+    handoff_file = proj / ".agents" / "HANDOFF.md"
+    assert handoff_file.exists(), "Файл .agents/HANDOFF.md не был создан"
+    text = handoff_file.read_text(encoding="utf-8")
+    assert "Контекст передачи проекта" in text
