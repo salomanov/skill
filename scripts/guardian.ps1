@@ -93,7 +93,7 @@ function Show-GuardianHelp {
         [PSCustomObject]@{ Команда = 'steps (stp)'; Описание = 'Счетчик шагов активной сессии и контроль перегрузки контекста' },
         [PSCustomObject]@{ Команда = 'rollback (rb)'; Описание = 'Откат к контрольной точке или просмотр списка (-List)' },
         [PSCustomObject]@{ Команда = 'failure (record, fail)'; Описание = 'Фиксация сбоя/инцидента в docs/ERRORS_AND_FAILURES.md' },
-        [PSCustomObject]@{ Команда = 'handoff'; Описание = 'Подготовка контекста для передачи в новый диалог (.agents/HANDOFF.md)' },
+        [PSCustomObject]@{ Команда = 'handoff (new-chat, next-chat)'; Описание = 'Авто-создание нового диалога в Antigravity и передача контекста (.agents/HANDOFF.md)' },
         [PSCustomObject]@{ Команда = 'scratch'; Описание = 'Генерация scratch-скрипта (Python/Bash) с UTF-8 и учетными данными' },
         [PSCustomObject]@{ Команда = 'clean'; Описание = 'Безопасная ротация старых бэкапов с защитой релизов (-DryRun)' },
         [PSCustomObject]@{ Команда = 'env'; Описание = 'Сканирование переменных окружения и сборка .env.example' },

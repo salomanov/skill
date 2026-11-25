@@ -130,9 +130,7 @@ description: >-
 ## 9. Подключаемые Справочные Модули (`references/`)
 
 Узкоспециализированные инструкции вынесены в отдельные справочники и читаются по требованию:
-- 🧪 **Selective TDD**: [references/SELECTIVE_TDD.md](references/SELECTIVE_TDD.md) — обязательный 3-фазный цикл RED $
-ightarrow$ GREEN $
-ightarrow$ REFACTOR для критичной бизнес-логики и список явных исключений.
+- 🧪 **Selective TDD**: [references/SELECTIVE_TDD.md](references/SELECTIVE_TDD.md) — обязательный 3-фазный цикл RED → GREEN → REFACTOR для критичной бизнес-логики и список явных исключений.
 - 🏢 **Составные воркспейсы**: [references/MULTI_PROJECT_GUIDE.md](references/MULTI_PROJECT_GUIDE.md) — регламент монорепозиториев, защита от раздувания бэкапов и параметры `-SubProject`.
 - 🛡️ **Harness² Probe & Audit**: [references/HARNESS2_PROBE.md](references/HARNESS2_PROBE.md) — архитектура зондирования скиллов (Propose-Probe-Compose) и аудит 8 измерений обвязки агента.
 - ✉️ **Почтовый шлюз**: [references/SEND_EMAIL.md](references/SEND_EMAIL.md) — отправка писем и отчетов с вложениями через SMTP (`send-email.ps1`).

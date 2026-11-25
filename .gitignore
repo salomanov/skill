@@ -1,6 +1,10 @@
 .backups/
 scratch/
 *.log
+__pycache__/
+*.pyc
+.pytest_cache/
+.agents/HANDOFF.md
 ses_*.json
 *.transcript.json
 .DS_Store

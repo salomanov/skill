@@ -3,9 +3,9 @@
 > Данный файл автоматически ведется агентом и служит долговременной памятью проекта.
 > При начале новой сессии агент считывает этот файл в первую очередь.
 
-- **Версия**: `v2.4.0` (Zero-Copy Automated Conversation Handoff) (Step Counter Calibration 500 + аудит сверяет версию памяти с кодом)
-- **Статус**: Активен, 30/30 Behavioral Tests PASSED, Zero-Copy Automated Conversation Handoff, Honest Harness, аудит сверяет версию памяти с кодом
-- **Дата обновления**: 2026-11-22
+- **Версия**: `v2.4.0` (Zero-Copy Automated Conversation Handoff)
+- **Статус**: Активен, 32/32 Behavioral Tests PASSED, Zero-Copy Automated Conversation Handoff, Honest Harness, Step Counter Calibration (500)
+- **Дата обновления**: 2026-11-25
 
 
 ---
@@ -134,6 +134,13 @@
   - Устранено дублирование CLI: корневой `guardian.ps1` переведен на тонкий шим к `scripts/guardian.ps1`.
   - Поведенческий TDD-сьют `tests/test_guardian.py` расширен с 9 до 26 автотестов (26/26 PASSED): раундтрип `checkpoint`/`rollback`, probe gate в `install-skill`, `session-guard`.
   - В `.gitignore` добавлены `ses_*.json` и `*.transcript.json`.
+- [x] **v2.3.0–v2.3.2**: Honest Harness, Context Hygiene, Step Counter Calibration (500) и аудит version drift:
+  - Честная самодиагностика `audit-harness.ps1` (реальный запуск `guardian.ps1`, негативный зонд гейта, AST/BOM проверка скриптов, сверка версии памяти с кодом).
+  - Модульная декомпозиция `SKILL.md` (с 764 до 139 строк с выносом в `references/`) и ротация истории в `docs/HISTORICAL_STATES.md`.
+  - Защита от 8.3-путей Windows в `security-gate.ps1` и калибровка счетчика шагов (`session-guard.ps1`, порог 500).
+- [x] **v2.4.0**: Zero-Copy Automated Conversation Handoff:
+  - Интеграция `prepare-handoff.ps1` с локальным API Antigravity (`product.v1.ConversationService/CreateConversation`) с фоллбэком (`-NoAutoCreate`) и записью ссылки `conversation://<id>`.
+  - Добавлены алиасы `new-chat` и `next-chat` в `guardian.ps1` и поведенческий тест хэндоффа.
 
 ## 4a. Известные исправления (Regressions — не сломать повторно)
 1. Раздел 8/9 не должен снова разрешать «пароль по умолчанию» — именно эта формулировка легализовала бэкдор.
@@ -160,6 +167,8 @@
 22. В `doctor.ps1` параметры обязаны оформляться с `[CmdletBinding()]` и валидацией `$ProjectPath.StartsWith("-")`, чтобы флаги вроде `-Harness` не затирали путь к проекту по позиционному сопоставлению.
 
 ## 5. История Изменений
+
+- 🛡️ **Чекпоинт** [2026-11-25 17:01:21] (метка: 2026-11-25_17-01-21): v2.4.0 polish: fix SKILL.md arrow, gitignore hygiene, docs sync, Zero-Copy API tests
 
 - 🛡️ **Чекпоинт** [2026-11-25 16:57:38] (метка: 2026-11-25_16-57-38): pre-fix: v2.4.0 polish (SKILL.md, gitignore, docs, handoff tests)
 

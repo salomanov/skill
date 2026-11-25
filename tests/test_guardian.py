@@ -14,12 +14,16 @@ SCRIPTS = REPO_ROOT / "scripts"
 PY = sys.executable
 
 
-def run_ps(script: Path, *args, cwd=None):
+def run_ps(script: Path, *args, cwd=None, env=None):
     """Запуск PowerShell-скрипта с перехватом stdout/stderr."""
     cmd = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script)] + [str(a) for a in args]
+    run_env = os.environ.copy()
+    if env:
+        run_env.update(env)
     return subprocess.run(
         cmd,
         cwd=str(cwd or REPO_ROOT),
+        env=run_env,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
@@ -376,19 +380,102 @@ def test_prepare_handoff_creates_handoff_doc(tmp_path):
     assert handoff_file.exists(), "Файл .agents/HANDOFF.md не был создан"
     text = handoff_file.read_text(encoding="utf-8")
     assert "Контекст передачи проекта" in text
+    assert "conversation://" not in text
 
 
-def test_prepare_handoff_creates_handoff_doc(tmp_path):
-    """prepare-handoff.ps1 с флагом -NoAutoCreate обязан создавать .agents/HANDOFF.md и выходить с 0."""
-    proj = tmp_path / "handoff_proj"
-    proj.mkdir()
-    (proj / "PROJECT_STATE.md").write_text("- **Версия**: `v1.0`\n## Следующие Шаги\n1. Сделать интеграцию\n", encoding="utf-8")
-    res = run_ps(SCRIPTS / "prepare-handoff.ps1", "-ProjectPath", proj, "-NoAutoCreate")
-    assert res.returncode == 0
-    handoff_file = proj / ".agents" / "HANDOFF.md"
-    assert handoff_file.exists(), "Файл .agents/HANDOFF.md не был создан"
-    text = handoff_file.read_text(encoding="utf-8")
-    assert "Контекст передачи проекта" in text
+def test_prepare_handoff_auto_creates_conversation_via_api(tmp_path):
+    """Zero-Copy Handoff: при доступном ConversationService создаёт диалог и пишет ссылку в HANDOFF.md."""
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+    import threading
+
+    received = {}
+
+    class MockLSHandler(BaseHTTPRequestHandler):
+        def log_message(self, format, *args):
+            pass
+
+        def do_POST(self):
+            length = int(self.headers.get("Content-Length", "0"))
+            raw = self.rfile.read(length).decode("utf-8")
+            received["path"] = self.path
+            received["csrf"] = self.headers.get("x-antigravity-csrf-token")
+            received["body"] = json.loads(raw)
+            resp = json.dumps({"conversation": {"id": "conv-test-999"}}).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(resp)))
+            self.end_headers()
+            self.wfile.write(resp)
+
+    server = HTTPServer(("127.0.0.1", 0), MockLSHandler)
+    port = server.server_address[1]
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        proj = tmp_path / "handoff_api_proj"
+        proj.mkdir()
+        (proj / "PROJECT_STATE.md").write_text("- **Версия**: `v1.0`\n## Следующие Шаги\n1. Проверить API\n", encoding="utf-8")
+        res = run_ps(
+            SCRIPTS / "prepare-handoff.ps1",
+            "-ProjectPath", proj,
+            "-DialogTitle", "ZeroCopy Test Dialog",
+            env={
+                "ANTIGRAVITY_LS_ADDRESS": f"127.0.0.1:{port}",
+                "ANTIGRAVITY_CSRF_TOKEN": "csrf-mock-value",
+                "ANTIGRAVITY_PROJECT_ID": "proj-mock-1",
+            },
+        )
+    finally:
+        server.shutdown()
+        server.server_close()
+
+    assert res.returncode == 0, res.stdout + res.stderr
+    assert received.get("path") == "/product.v1.ConversationService/CreateConversation"
+    assert received.get("csrf") == "csrf-mock-value"
+    assert received["body"]["title"] == "ZeroCopy Test Dialog"
+    assert received["body"]["projectId"] == "proj-mock-1"
+    handoff_text = (proj / ".agents" / "HANDOFF.md").read_text(encoding="utf-8")
+    assert "conversation://conv-test-999" in handoff_text
+    assert "conv-test-999" in res.stdout
+
+
+def test_prepare_handoff_api_failure_falls_back_gracefully(tmp_path):
+    """При ошибке HTTP API prepare-handoff.ps1 не падает, сохраняет HANDOFF.md и выводит фоллбэк-промпт."""
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+    import threading
+
+    class FailingLSHandler(BaseHTTPRequestHandler):
+        def log_message(self, format, *args):
+            pass
+
+        def do_POST(self):
+            self.send_response(500)
+            self.end_headers()
+
+    server = HTTPServer(("127.0.0.1", 0), FailingLSHandler)
+    port = server.server_address[1]
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        proj = tmp_path / "handoff_fallback_proj"
+        proj.mkdir()
+        (proj / "PROJECT_STATE.md").write_text("- **Версия**: `v1.0`\n## Следующие Шаги\n1. Фоллбэк\n", encoding="utf-8")
+        res = run_ps(
+            SCRIPTS / "prepare-handoff.ps1",
+            "-ProjectPath", proj,
+            env={
+                "ANTIGRAVITY_LS_ADDRESS": f"127.0.0.1:{port}",
+                "ANTIGRAVITY_CSRF_TOKEN": "csrf-mock-value",
+            },
+        )
+    finally:
+        server.shutdown()
+        server.server_close()
+
+    assert res.returncode == 0, res.stdout + res.stderr
+    assert "[WARN]" in res.stdout
+    assert (proj / ".agents" / "HANDOFF.md").exists()
+    assert "СКОПИРУЙТЕ ЭТОТ ПРОМПТ" in res.stdout
 
 
 def test_prepare_handoff_creates_handoff_doc(tmp_path):

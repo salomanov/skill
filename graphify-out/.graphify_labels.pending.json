@@ -31,5 +31,7 @@
   "29": "test_harness_detects_broken_guardian_tool",
   "30": "test_harness_detects_broken_script_syntax",
   "31": "test_root_facade_is_thin_shim",
-  "32": "test_prepare_handoff_creates_handoff_doc"
+  "32": "test_prepare_handoff_creates_handoff_doc",
+  "33": "test_prepare_handoff_auto_creates_conversation_via_api",
+  "34": "test_prepare_handoff_api_failure_falls_back_gracefully"
 }

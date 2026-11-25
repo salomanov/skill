@@ -28,7 +28,7 @@
 6. 🔍 **Автономный подбор скиллов**: подтягивание нужных скиллов из каталога [sickn33/agentic-awesome-skills](https://github.com/sickn33/agentic-awesome-skills) под нужный стек без напоминаний.
 7. 📊 **Mandatory Graphify**: построение графа зависимостей кодовой базы для любого проекта.
 8. ⚡ **Ponytail Pragmatic Mode**: жесткий режим борьбы с оверинжинирингом — чистый минимальный код, экономия более 50% токенов, отсечение ненужных библиотек. Не применяется к аутентификации и обработке секретов.
-9. 🩺 **Productivity Suite**: экспресс-диагностика окружения (`doctor.ps1`), бесшовный перенос контекста в новый диалог (`prepare-handoff.ps1`), безопасная очистка бэкапов (`clean-backups.ps1`), сканер секретов и генератор `.env.example` (`gen-env.ps1`), авто-тестирование перед коммитом (`checkpoint.ps1 -Verify`).
+9. 🩺 **Productivity Suite**: единый CLI-фасад (`guardian.ps1`), диагностика окружения (`doc`), честный аудит обвязки Harness² (`harness`), зондирование скиллов (`probe`), Zero-Copy авто-создание нового диалога (`handoff` / `new-chat`), авто-раннер тестов (`test`), безопасная очистка бэкапов (`clean`), генератор `.env.example` (`env`), счетчик шагов сессии (`steps`).
 10. 🗂️ **Multi-Project Workspace Protection**: изолированные чекпоинты и проверки подпроектов в составных воркспейсах/монорепозиториях без раздувания архивов родительской папки.
 
 ---
@@ -37,83 +37,79 @@
 
 ```text
 /
-├── SKILL.md                          # Манифест скилла с триггерами и регламентом
+├── guardian.ps1                      # Единый CLI-фасад (тонкий шим к scripts/guardian.ps1)
+├── SKILL.md                          # Компактный манифест скилла v2.4
 ├── scripts/
-│   ├── checkpoint.ps1                # Универсальный скрипт бэкапа (код / web / desktop / firmware / -Verify / -SubProject)
-│   ├── doctor.ps1                    # Экспресс-диагностика окружения, Git и компонентов
-│   ├── prepare-handoff.ps1           # Генерация ультракомпактного контекста для нового диалога (.agents/HANDOFF.md)
-│   ├── clean-backups.ps1             # Безопасная ротация промежуточных бэкапов (-DryRun)
+│   ├── guardian.ps1                  # Консолидированный фасад CLI (алиасы cp, doc, gate, test, harness, probe, handoff...)
+│   ├── checkpoint.ps1                # Бэкапы (код / web / desktop / firmware / -Verify / -SubProject / -Push)
+│   ├── doctor.ps1                    # Экспресс-диагностика окружения, Git и компонентов (-Harness)
+│   ├── audit-harness.ps1             # Честный аудит 8 измерений обвязки (Harness² Audit)
+│   ├── probe-skill.ps1               # Зондирование скиллов перед установкой (Harness² Probe)
+│   ├── run-tests.ps1                 # Авто-раннер тестов с Auto-Ensure (pytest / unittest / npm)
+│   ├── prepare-handoff.ps1           # Zero-Copy авто-создание нового диалога в Antigravity (.agents/HANDOFF.md)
+│   ├── session-steps.ps1             # Счетчик шагов активной сессии и контроль перегрузки контекста
+│   ├── clean-backups.ps1             # Безопасная ротация промежуточных бэкапов (-Keep, -DryRun)
 │   ├── gen-env.ps1                   # Сканер кодовой базы и генератор шаблона .env.example
-│   ├── security-gate.ps1             # Исполняемый гейт: секреты, антипаттерны, синтаксис (exit 1)
+│   ├── security-gate.ps1             # Исполняемый гейт: секреты, антипаттерны, AST, BOM, PS-001, REC-001 (exit 1)
 │   ├── record-failure.ps1            # Фиксация инцидентов в docs/ERRORS_AND_FAILURES.md
 │   ├── rollback.ps1                  # Менеджер отката с просмотром точек (-List)
-│   ├── new-scratch.ps1               # Безопасный генератор scratch-скриптов (UTF-8, авто-подтягивание SSH/API кредов)
-│   └── install-skill.ps1             # Автономный загрузчик скиллов из GitHub
-├── references/
-│   └── PROJECT_STATE_TEMPLATE.md     # Универсальный шаблон памяти проекта
+│   ├── new-scratch.ps1               # Безопасный генератор scratch-скриптов (UTF-8, авто-подтягивание кредов)
+│   ├── install-skill.ps1             # Автономный загрузчик скиллов из GitHub с Probe Gate
+│   ├── check-new-skills.ps1          # Мониторинг новых скиллов в апстриме
+│   ├── add-recommendation.ps1        # Формирование рекомендаций для внешнего проекта или скилла
+│   └── send-email.ps1                # Универсальный почтовый шлюз (SSL/TLS, вложения)
+├── references/                       # Модульные справочники (Selective TDD, Harness², Multi-Project, Email, Шаблон памяти)
+├── tests/
+│   └── test_guardian.py              # Поведенческие автотесты (pytest)
 ├── .gitignore
-├── PROJECT_STATE.md                  # Память данного репозитория
+├── PROJECT_STATE.md                  # Оперативная память репозитория
+├── CHANGELOG.md
 └── README.md
 ```
 
 ---
 
-## Использование
+## Использование (единый фасад `guardian.ps1`)
 
-### 1. Чекпоинт кода (перед правками)
+### 1. Базовые команды
 ```powershell
-& ".\scripts\checkpoint.ps1" -Message "Рефакторинг роутов"
+.\guardian.ps1 doc                                    # Диагностика окружения и проекта
+.\guardian.ps1 gate                                   # Обязательный Security Gate (exit 0 / 1)
+.\guardian.ps1 test                                   # Запуск автотестов
+.\guardian.ps1 harness                                # Аудит 8 измерений обвязки (Harness²)
+.\guardian.ps1 cp -Message "Рефакторинг роутов"       # Локальный чекпоинт кода (без push)
+.\guardian.ps1 handoff -NextGoal "Следующий этап"     # Zero-Copy переход в новый диалог
 ```
 
-### 2. Релиз веб-сайта
+### 2. Релизные несгораемые архивы
 ```powershell
-& ".\scripts\checkpoint.ps1" -Message "Релиз v1.0.0" -Category "Web" -Release
+.\guardian.ps1 cp -Message "Релиз v1.0.0" -Category "Web" -Release
+.\guardian.ps1 cp -Message "Сборка ПК-версии v1.2" -Category "Desktop" -Release
+.\guardian.ps1 cp -Message "Успешный flash v2.1" -Firmware
 ```
 
-### 3. Релиз программы для ПК
+### 3. Просмотр и откат
 ```powershell
-& ".\scripts\checkpoint.ps1" -Message "Сборка ПК-версии v1.2" -Category "Desktop" -Release
+.\guardian.ps1 rb -List
+.\guardian.ps1 rb
+.\guardian.ps1 rb -TargetCheckpoint "desktop_release_2026-09-28_15-00-00"
 ```
 
-### 4. Удачная прошивка микроконтроллера
-```powershell
-& ".\scripts\checkpoint.ps1" -Message "Успешный flash v2.1" -Firmware
-```
-
-### 5. Просмотр и откат
-```powershell
-# Список сохраненных точек:
-& ".\scripts\rollback.ps1" -List
-
-# Откат к последней точке:
-& ".\scripts\rollback.ps1"
-
-# Откат к конкретной точке:
-& ".\scripts\rollback.ps1" -TargetCheckpoint "desktop_release_2026-09-28_15-00-00"
-```
-
-### 6. Обязательный security-gate перед коммитом
-
-```powershell
-& ".\scripts\security-gate.ps1" -ProjectPath "E:\Projects\MyProject"
-# exit 0 — можно коммитить; exit 1 — есть находки, чинить
-```
+### 4. Security Gate и allowlist
 
 Что проверяется: секреты и приватные ключи в трекаемых файлах, дефолтные пароли,
 `auth.enabled = false`, `verify=False`, `shell=True`, `curl | sh`, `python3 -c`,
-`chmod 777`, wildcard CORS, синтаксис Python/JS/sh/ps1, а с `-CheckLinks` — доступность URL.
+`chmod 777`, wildcard CORS, `Test-Path` без `-LiteralPath` (`PS-001`), UTF-8 BOM в `.sh`/`.kl` (`SYNTAX-BOM`),
+синтаксис Python/JS/sh/ps1 и архивация закрытых рекомендаций (`REC-001`).
 
-Осознанные исключения (например, стандартный пароль панели по требованию владельца)
-живут в `<проект>/.security-gate-allow`, по строке с причиной после `#`. Исключения печатаются
-в отчёте — они не «зеленеют» молча, но и не блокируют сборку.
+Осознанные исключения живут в `<проект>/.security-gate-allow` в строгом формате `<RULE-ID> <путь[:строка]> # причина`. Исключения печатаются в отчёте — они не «зеленеют» молча, но и не блокируют сборку.
 
-### 7. Изоляция в составных воркспейсах (монорепозиториях)
+### 5. Изоляция в составных воркспейсах (монорепозиториях)
 
 Если в одной общей папке находятся несколько отдельных проектов (например, `Router_Workspace/Router_api`, `Router_Workspace/Opds`):
 ```powershell
-# Чекпоинт конкретного подпроекта (изолированный бэкап):
-& ".\scripts\checkpoint.ps1" -ProjectPath "E:\Projects\Router_Workspace\Opds" -Message "Обновление OPDS"
+.\guardian.ps1 cp -ProjectPath "E:\Projects\Router_Workspace\Opds" -Message "Обновление OPDS"
 # или коротко:
-& ".\scripts\checkpoint.ps1" -SubProject "Opds" -Message "Обновление OPDS"
+.\guardian.ps1 cp -SubProject "Opds" -Message "Обновление OPDS"
 ```
 Скрипт автоматически определяет активный подпроект по Git-изменениям и сохраняет снимки строго в `Opds/.backups/`, а при создании бэкапа родительской папки исключает вложенные проекты, защищая диск от гигабайтных дубликатов.
