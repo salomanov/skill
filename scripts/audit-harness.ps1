@@ -27,7 +27,7 @@ if ($ProjectPath -and (Test-Path -LiteralPath $ProjectPath)) {
     $ProjectPath = (Resolve-Path -LiteralPath $ProjectPath).Path
 }
 
-Write-Host "`n=== [Project Guardian] Аудит 8 Измерений Обвязки (Harness² Honest Audit v2.3) ===" -ForegroundColor Cyan
+Write-Host "`n=== [Project Guardian] Аудит 8 Измерений Обвязки (Harness² Honest Audit v2.4) ===" -ForegroundColor Cyan
 Write-Host "Проект: $ProjectPath`n"
 
 $dimensionScore = 0

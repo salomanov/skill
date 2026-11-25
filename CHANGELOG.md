@@ -2,6 +2,24 @@
 
 All notable changes to Project Guardian are documented in this file.
 
+## v2.4.0 - 2026-11-25
+
+### Added & Automated (Zero-Copy Automated Conversation Handoff)
+- **Автоматическое создание нового диалога в Antigravity (`scripts/prepare-handoff.ps1`)**:
+  - Интеграция с локальным HTTP API языкового сервера Antigravity (`product.v1.ConversationService/CreateConversation`).
+  - При доступности `$env:ANTIGRAVITY_LS_ADDRESS` и `$env:ANTIGRAVITY_CSRF_TOKEN` скрипт автоматически создает новый диалог с привязкой к текущему `projectId`, названием диалога и сразу отправляет туда стартовый промпт.
+  - Пользователю выводится прямая кликабельная ссылка вида `👉 [Перейти в новый диалог: <Название>](conversation://<id>)`.
+  - В `.agents/HANDOFF.md` сохраняется постоянная ссылка на созданный диалог.
+  - Сохранен фоллбэк на вывод промпта при работе вне Antigravity или с флагом `-NoAutoCreate`.
+- **Новые алиасы фасада CLI (`scripts/guardian.ps1`)**:
+  - Добавлены команды `guardian.ps1 new-chat` и `next-chat` как прямые алиасы `prepare-handoff.ps1`.
+- **Поведенческий норматив в `SKILL.md`**:
+  - Закреплено правило: когда пользователь просит перейти в новый чат («пошли в новый диалог», «создай новый чат») или наступает порог шагов — агент сам вызывает `guardian.ps1 handoff` и предоставляет готовую ссылку, полностью избавляя человека от ручного копирования.
+- **Расширение TDD-сьюта (`tests/test_guardian.py`)**:
+  - Добавлен поведенческий тест `test_prepare_handoff_creates_handoff_doc` (30/30 PASSED).
+
+---
+
 ## v2.3.2 - 2026-11-22
 
 ### Fixed

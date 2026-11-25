@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-    Project Guardian v2.3.2 - Единый интерфейс (фасад) для всех утилит проекта.
+    Project Guardian v2.4.0 - Единый интерфейс (фасад) для всех утилит проекта.
 .DESCRIPTION
     Объединяет управление контрольными точками, диагностику (doctor), проверку безопасности
     (security gate), автотесты, откат, фиксацию сбоев, передачу контекста (handoff),
@@ -61,6 +61,8 @@ $CommandMap = @{
     'record'       = 'record-failure.ps1'
     'fail'         = 'record-failure.ps1'
     'handoff'      = 'prepare-handoff.ps1'
+    'new-chat'     = 'prepare-handoff.ps1'
+    'next-chat'    = 'prepare-handoff.ps1'
     'scratch'      = 'new-scratch.ps1'
     'clean'        = 'clean-backups.ps1'
     'env'          = 'gen-env.ps1'
@@ -77,7 +79,7 @@ $CommandMap = @{
 }
 
 function Show-GuardianHelp {
-    Write-Host "`n🛡️ Project Guardian v2.3.2 CLI (Universal Facade)" -ForegroundColor Cyan
+    Write-Host "`n🛡️ Project Guardian v2.4.0 CLI (Universal Facade)" -ForegroundColor Cyan
     Write-Host "Использование: guardian.ps1 <команда> [параметры...]" -ForegroundColor White
     Write-Host "`nДоступные команды:" -ForegroundColor Yellow
     

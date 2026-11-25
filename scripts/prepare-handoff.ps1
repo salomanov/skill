@@ -3,6 +3,7 @@
     [string]$SubProject = "",
     [string]$DialogTitle = "",
     [string]$ConversationId = "",
+    [switch]$NoAutoCreate,
     [Parameter(Position=0)]
     [string[]]$NextGoal = @(""),
     [Parameter(ValueFromRemainingArguments=$true)]
@@ -234,11 +235,62 @@ if ($pendingTasks.Count -gt 0) {
 
 [System.IO.File]::WriteAllText($handoffFile, $handoffDoc, [System.Text.Encoding]::UTF8)
 
+# Попытка автоматического создания диалога через Antigravity ConversationService
+$createdConvId = $null
+$createError = $null
+
+if (-not $NoAutoCreate -and $env:ANTIGRAVITY_LS_ADDRESS -and $env:ANTIGRAVITY_CSRF_TOKEN) {
+    try {
+        $headers = @{
+            "Content-Type" = "application/json"
+            "Connect-Protocol-Version" = "1"
+            "x-antigravity-csrf-token" = $env:ANTIGRAVITY_CSRF_TOKEN
+        }
+        $payload = @{
+            title = $DialogTitle
+            prompt = @(@{ text = $handoffPrompt })
+        }
+        if ($env:ANTIGRAVITY_PROJECT_ID) {
+            $payload["projectId"] = $env:ANTIGRAVITY_PROJECT_ID
+        }
+        $body = ($payload | ConvertTo-Json -Depth 5 -Compress)
+        $url = "http://$($env:ANTIGRAVITY_LS_ADDRESS)/product.v1.ConversationService/CreateConversation"
+        $res = Invoke-RestMethod -Uri $url -Method Post -Headers $headers -Body ([System.Text.Encoding]::UTF8.GetBytes($body)) -TimeoutSec 15 -ErrorAction Stop
+        if ($res -and $res.conversation -and $res.conversation.id) {
+            $createdConvId = $res.conversation.id
+            
+            # Дописываем ссылку на созданный диалог в HANDOFF.md
+            $handoffDocWithConv = $handoffDoc.Replace(
+                "- **Название диалога**: $DialogTitle",
+                "- **Название диалога**: $DialogTitle`n- **Созданный диалог**: [$DialogTitle](conversation://$createdConvId)"
+            )
+            [System.IO.File]::WriteAllText($handoffFile, $handoffDocWithConv, [System.Text.Encoding]::UTF8)
+        }
+    } catch {
+        $createError = $_.Exception.Message
+    }
+}
+
 Write-Host "[OK] Файл контекста сохранен: $handoffFile" -ForegroundColor Green
 Write-Host "[OK] Сохранено название диалога: $DialogTitle" -ForegroundColor Magenta
-Write-Host ("`n" + ("=" * 70)) -ForegroundColor Cyan
-Write-Host "СКОПИРУЙТЕ ЭТОТ ПРОМПТ В НОВЫЙ ДИАЛОГ ДЛЯ МГНОВЕННОГО ВХОДА В КОНТЕКСТ:" -ForegroundColor Yellow
-Write-Host ("=" * 70) -ForegroundColor Cyan
-Write-Host $handoffPrompt -ForegroundColor White
-Write-Host ("=" * 70) -ForegroundColor Cyan
-Write-Host ""
+
+if ($createdConvId) {
+    Write-Host "`n[OK] НОВЫЙ ДИАЛОГ АВТОМАТИЧЕСКИ СОЗДАН В ANTIGRAVITY!" -ForegroundColor Green
+    Write-Host "ID диалога: $createdConvId" -ForegroundColor Cyan
+    Write-Host ("`n" + ("=" * 70)) -ForegroundColor Cyan
+    Write-Host " НАЖМИТЕ ДЛЯ МГНОВЕННОГО ПЕРЕХОДА В НОВЫЙ ДИАЛОГ:" -ForegroundColor Yellow
+    Write-Host ("=" * 70) -ForegroundColor Cyan
+    Write-Host "👉 [$DialogTitle](conversation://$createdConvId)" -ForegroundColor Green
+    Write-Host ("=" * 70) -ForegroundColor Cyan
+    Write-Host ""
+} else {
+    if ($createError) {
+        Write-Host "[WARN] Авто-создание диалога через API недоступно: $createError" -ForegroundColor DarkYellow
+    }
+    Write-Host ("`n" + ("=" * 70)) -ForegroundColor Cyan
+    Write-Host "СКОПИРУЙТЕ ЭТОТ ПРОМПТ В НОВЫЙ ДИАЛОГ ДЛЯ МГНОВЕННОГО ВХОДА В КОНТЕКСТ:" -ForegroundColor Yellow
+    Write-Host ("=" * 70) -ForegroundColor Cyan
+    Write-Host $handoffPrompt -ForegroundColor White
+    Write-Host ("=" * 70) -ForegroundColor Cyan
+    Write-Host ""
+}

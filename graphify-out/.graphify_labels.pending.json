@@ -21,6 +21,7 @@
   "19": "guardian.ps1",
   "20": "scripts/guardian.ps1",
   "21": "session-guard.ps1",
+  "22": "audit-harness.ps1",
   "23": "test_install_skill_calls_probe_gate",
   "24": "send-email.ps1",
   "25": "make_transcript",
@@ -29,5 +30,6 @@
   "28": "test_harness_reports_blockers",
   "29": "test_harness_detects_broken_guardian_tool",
   "30": "test_harness_detects_broken_script_syntax",
-  "31": "test_root_facade_is_thin_shim"
+  "31": "test_root_facade_is_thin_shim",
+  "32": "test_prepare_handoff_creates_handoff_doc"
 }

@@ -1,17 +1,17 @@
 # Graph Report - Skill  (2026-11-25)
 
 ## Corpus Check
-- 23 files · ~31,513 words
+- 23 files · ~32,066 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 3 file(s) not represented in the graph (top: (none) 3)
 
 ## Summary
-- 117 nodes · 180 edges · 31 communities (5 shown, 26 thin omitted)
-- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 2 edges (avg confidence: 0.85)
+- 120 nodes · 183 edges · 33 communities (5 shown, 28 thin omitted)
+- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 1 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `559dc7c5`
+- Built from commit: `ff75c00a`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -32,9 +32,10 @@
 - test_harness_detects_broken_guardian_tool
 - test_harness_detects_broken_script_syntax
 - test_root_facade_is_thin_shim
+- test_prepare_handoff_creates_handoff_doc
 
 ## God Nodes (most connected - your core abstractions)
-1. `run_ps()` - 31 edges
+1. `run_ps()` - 32 edges
 2. `make_project()` - 10 edges
 3. `secret_line()` - 6 edges
 4. `make_transcript()` - 6 edges
@@ -60,7 +61,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (31 total, 26 thin omitted)
+## Communities (33 total, 28 thin omitted)
 
 ### Community 0 - "get_dialog_title.py"
 Cohesion: 0.38
@@ -83,14 +84,14 @@ Cohesion: 0.50
 Nodes (4): make_transcript(), test_step_counter_counts_steps_not_lines(), test_step_counter_threshold_exit_code(), test_steps_via_facade()
 
 ## Knowledge Gaps
-- **26 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **28 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `run_ps()` connect `test_guardian.py` to `test_harness_detects_version_drift`, `make_project`, `make_transcript`, `test_checkpoint_and_rollback_roundtrip`, `test_step_counter_silent_when_session_unknown`, `test_harness_reports_blockers`, `test_harness_detects_broken_guardian_tool`, `test_harness_detects_broken_script_syntax`, `test_root_facade_is_thin_shim`?**
-  _High betweenness centrality (0.067) - this node is a cross-community bridge._
+- **Why does `run_ps()` connect `test_guardian.py` to `test_prepare_handoff_creates_handoff_doc`, `test_harness_detects_version_drift`, `make_project`, `make_transcript`, `test_checkpoint_and_rollback_roundtrip`, `test_step_counter_silent_when_session_unknown`, `test_harness_reports_blockers`, `test_harness_detects_broken_guardian_tool`, `test_harness_detects_broken_script_syntax`, `test_root_facade_is_thin_shim`?**
+  _High betweenness centrality (0.073) - this node is a cross-community bridge._
+- **Why does `test_prepare_handoff_creates_handoff_doc()` connect `test_prepare_handoff_creates_handoff_doc` to `test_guardian.py`?**
+  _High betweenness centrality (0.024) - this node is a cross-community bridge._
 - **Why does `secret_line()` connect `make_project` to `test_guardian.py`?**
-  _High betweenness centrality (0.012) - this node is a cross-community bridge._
-- **Why does `test_gate_allowlist_strict_entry_is_narrow()` connect `make_project` to `test_guardian.py`?**
   _High betweenness centrality (0.012) - this node is a cross-community bridge._

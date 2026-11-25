@@ -54,9 +54,9 @@
     "semantic_hash": ""
   },
   "scripts/prepare-handoff.ps1": {
-    "mtime": 1795372689.24283,
-    "seen": 1795603793.250276,
-    "ast_hash": "0559ee74797904e5f91bba46a72bddd8",
+    "mtime": 1795603879.7964032,
+    "seen": 1795604034.4626136,
+    "ast_hash": "1a6484e685ebee4f569204699761fc44",
     "semantic_hash": ""
   },
   "scripts/record-failure.ps1": {
@@ -108,15 +108,15 @@
     "semantic_hash": ""
   },
   "CHANGELOG.md": {
-    "mtime": 1795372842.9633303,
-    "seen": 1795603793.2503064,
-    "ast_hash": "ce798e66b9404551d61d85e4f3a0a902",
+    "mtime": 1795603985.2480164,
+    "seen": 1795604034.462641,
+    "ast_hash": "bac68bed0fe9335de27246a05b6fff81",
     "semantic_hash": ""
   },
   "PROJECT_STATE.md": {
-    "mtime": 1795603790.2083893,
-    "seen": 1795603793.2503088,
-    "ast_hash": "b8946a83512133f2d83ccb637aa0498a",
+    "mtime": 1795604032.4216247,
+    "seen": 1795604034.462643,
+    "ast_hash": "56d7dbd900b579f1f63079b8dfda079a",
     "semantic_hash": ""
   },
   "README.md": {
@@ -126,9 +126,9 @@
     "semantic_hash": ""
   },
   "SKILL.md": {
-    "mtime": 1795351271.4296916,
-    "seen": 1795351559.221451,
-    "ast_hash": "bb2403b76bd968ef6316afef85ba5b24",
+    "mtime": 1795603985.250731,
+    "seen": 1795604034.462647,
+    "ast_hash": "b0119f1dc3c4bffa4aee023e8262a4a6",
     "semantic_hash": ""
   },
   "SKILL_REVIEW.md": {
@@ -162,21 +162,21 @@
     "semantic_hash": ""
   },
   "scripts/guardian.ps1": {
-    "mtime": 1795372739.2150698,
-    "seen": 1795603793.2502687,
-    "ast_hash": "4cdbdbc3b751224c1e5f9c284f9d85d6",
+    "mtime": 1795604020.00222,
+    "seen": 1795604034.462607,
+    "ast_hash": "31f6ca17c90ad33c6baadf02986bb8ba",
     "semantic_hash": ""
   },
   "tests/test_guardian.py": {
-    "mtime": 1795372788.0840998,
-    "seen": 1795603793.2502992,
-    "ast_hash": "9a23d092a5844807c31ac646befe6c92",
+    "mtime": 1795603907.3936787,
+    "seen": 1795604034.4626348,
+    "ast_hash": "fc39921219b4cc04db6a2a18dd2507b4",
     "semantic_hash": ""
   },
   "scripts/audit-harness.ps1": {
-    "mtime": 1795372729.4373963,
-    "seen": 1795603793.2502491,
-    "ast_hash": "0121216e7ec37b1149feb77204e74560",
+    "mtime": 1795604020.0032008,
+    "seen": 1795604034.462587,
+    "ast_hash": "4cec781e1e4f08498d812b4e1633f43f",
     "semantic_hash": ""
   },
   "scripts/probe-skill.ps1": {

@@ -3,8 +3,8 @@
 > Данный файл автоматически ведется агентом и служит долговременной памятью проекта.
 > При начале новой сессии агент считывает этот файл в первую очередь.
 
-- **Версия**: `v2.3.2` (Step Counter Calibration 500 + аудит сверяет версию памяти с кодом)
-- **Статус**: Активен, 29/29 Behavioral Tests PASSED, Honest Harness, аудит сверяет версию памяти с кодом
+- **Версия**: `v2.4.0` (Zero-Copy Automated Conversation Handoff) (Step Counter Calibration 500 + аудит сверяет версию памяти с кодом)
+- **Статус**: Активен, 30/30 Behavioral Tests PASSED, Zero-Copy Automated Conversation Handoff, Honest Harness, аудит сверяет версию памяти с кодом
 - **Дата обновления**: 2026-11-22
 
 
@@ -160,6 +160,8 @@
 22. В `doctor.ps1` параметры обязаны оформляться с `[CmdletBinding()]` и валидацией `$ProjectPath.StartsWith("-")`, чтобы флаги вроде `-Harness` не затирали путь к проекту по позиционному сопоставлению.
 
 ## 5. История Изменений
+
+- 🛡️ **Чекпоинт** [2026-11-25 15:53:52] (метка: 2026-11-25_15-53-52): v2.4.0: Zero-Copy Automated Conversation Creation in Handoff
 
 - 🛡️ **Чекпоинт** [2026-11-25 15:49:50] (метка: 2026-11-25_15-49-50): pre-v2.4.0: Automated Conversation Creation in Handoff
 

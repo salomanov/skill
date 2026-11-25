@@ -7,7 +7,7 @@ description: >-
   Manages project memory (PROJECT_STATE.md), safety checkpoints, security gates, failure logging, rollback,
   multi-project boundaries, and autonomous skill discovery.
 ---
-# Project Guardian (Универсальный Хранитель Проекта v2.3)
+# Project Guardian (Универсальный Хранитель Проекта v2.4)
 
 Универсальный стандарт надежности, безопасности и контекстной памяти для Google Antigravity и Gemini CLI.
 Охватывает три целевые сферы:
@@ -31,7 +31,7 @@ description: >-
 | `test` | `tests` | Авто-раннер тестов с Auto-Ensure (pytest / unittest / npm) |
 | `failure` | `fail`, `record` | Моментальная фиксация сбоя в `docs/ERRORS_AND_FAILURES.md` (`-SubProject`, `-Skill`) |
 | `rollback` | `rb` | Менеджер отката с просмотром снимков (`-List`, `-Step N`) |
-| `handoff` | — | Генерация компактного слепка `.agents/HANDOFF.md` для нового диалога |
+| `handoff` | `new-chat`, `next-chat` | Авто-создание нового диалога в Antigravity и передача контекста (`.agents/HANDOFF.md`) |
 | `scratch` | — | Безопасный генератор scratch-скриптов с UTF-8 и авто-считыванием кредов (`-WithSSH`) |
 | `clean` | — | Безопасная ротация промежуточных бэкапов (`-Keep N`, `-DryRun`) |
 | `env` | — | Сканер кодовой базы и сборка шаблона `.env.example` |
@@ -62,7 +62,7 @@ description: >-
    `.\guardian.ps1 gate`
    `.\guardian.ps1 test`
 5. **При завершении этапа**: Актуализировать `PROJECT_STATE.md` (статус, история изменений).
-6. **Контекстная гигиена (150–200 шагов)**: Запустить `.\guardian.ps1 handoff` и предложить перейти в новый диалог во избежание когнитивной деградации.
+6. **Контекстная гигиена и новый диалог**: При приближении к порогу перегрузки или по запросу пользователя («пошли в новый диалог», «создай новый чат») агент запускает `.\guardian.ps1 handoff`, автоматически создает новый диалог через Antigravity ConversationService и сразу предоставляет ссылку: `[Открыть новый диалог: <Название>](conversation://<id>)`. Ручное копирование больше не требуется.
 
 ---
 
@@ -130,7 +130,9 @@ description: >-
 ## 9. Подключаемые Справочные Модули (`references/`)
 
 Узкоспециализированные инструкции вынесены в отдельные справочники и читаются по требованию:
-- 🧪 **Selective TDD**: [references/SELECTIVE_TDD.md](references/SELECTIVE_TDD.md) — обязательный 3-фазный цикл RED $ightarrow$ GREEN $ightarrow$ REFACTOR для критичной бизнес-логики и список явных исключений.
+- 🧪 **Selective TDD**: [references/SELECTIVE_TDD.md](references/SELECTIVE_TDD.md) — обязательный 3-фазный цикл RED $
+ightarrow$ GREEN $
+ightarrow$ REFACTOR для критичной бизнес-логики и список явных исключений.
 - 🏢 **Составные воркспейсы**: [references/MULTI_PROJECT_GUIDE.md](references/MULTI_PROJECT_GUIDE.md) — регламент монорепозиториев, защита от раздувания бэкапов и параметры `-SubProject`.
 - 🛡️ **Harness² Probe & Audit**: [references/HARNESS2_PROBE.md](references/HARNESS2_PROBE.md) — архитектура зондирования скиллов (Propose-Probe-Compose) и аудит 8 измерений обвязки агента.
 - ✉️ **Почтовый шлюз**: [references/SEND_EMAIL.md](references/SEND_EMAIL.md) — отправка писем и отчетов с вложениями через SMTP (`send-email.ps1`).
