@@ -161,6 +161,8 @@
 
 ## 5. История Изменений
 
+- 🛡️ **Чекпоинт** [2026-11-25 15:49:50] (метка: 2026-11-25_15-49-50): pre-v2.4.0: Automated Conversation Creation in Handoff
+
 - 🛡️ **Чекпоинт** [2026-11-22 23:40:55] (метка: 2026-11-22_23-40-55): v2.3.2: version drift audit and changelog
 
 - 🛡️ **Чекпоинт** [2026-11-22 17:55:01] (метка: 2026-11-22_17-55-01): v2.3.1: Step counter threshold calibration (500 steps, user/model/trajectory differentiation)
